@@ -390,6 +390,31 @@ Sitemap: https://kohlschwarz.at:8000/sitemap.xml
 `))
 }
 
+func (s *Server) HandleLLMTxt(w http.ResponseWriter, r *http.Request) {
+	q := dbgen.New(s.DB)
+	apps, _ := q.ListApps(r.Context())
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	fmt.Fprint(w, `# Kohlschwarz Think-Tank
+
+Civic data apps built for Austria. Open-source, methods and data included.
+All apps are interactive, browser-based, and freely accessible.
+
+## Apps
+
+`)
+	for _, app := range apps {
+		fmt.Fprintf(w, "### %s\n", app.Title)
+		fmt.Fprintf(w, "URL: %s\n", app.Url)
+		fmt.Fprintf(w, "%s\n\n", app.Description)
+	}
+	fmt.Fprint(w, `## Contact
+
+Email: raffaelhickisch+kohlschwarz@gmail.com
+GitHub: https://github.com/raffopenssh/kohlschwarz-think-tank
+`)
+}
+
 func (s *Server) HandleImpressum(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.renderTemplate(w, "impressum.html", nil); err != nil {
@@ -434,6 +459,7 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /admin/new", s.HandleAdminEdit)
 	mux.HandleFunc("POST /admin/save", s.HandleAdminSave)
 	mux.HandleFunc("POST /admin/delete/{id}", s.HandleAdminDelete)
+	mux.HandleFunc("GET /llm.txt", s.HandleLLMTxt)
 	mux.HandleFunc("GET /api/apps", s.HandleAPIApps)
 	mux.HandleFunc("POST /api/click/{id}", s.HandleTrackClick)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
