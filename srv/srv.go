@@ -31,6 +31,25 @@ type pageData struct {
 	App      *dbgen.App
 	Error    string
 	Success  string
+	Lang     string // "de" or "en"
+}
+
+func (p pageData) DE() bool { return p.Lang != "en" }
+
+// Clicks returns the click count value (0 if unset).
+func (p pageData) Clicks(app dbgen.App) int64 {
+	if app.ClickCount != nil {
+		return *app.ClickCount
+	}
+	return 0
+}
+
+// Desc returns the description in the page language, falling back to English.
+func (p pageData) Desc(app dbgen.App) string {
+	if p.DE() && app.DescriptionDe != nil && *app.DescriptionDe != "" {
+		return *app.DescriptionDe
+	}
+	return app.Description
 }
 
 func New(dbPath, hostname string) (*Server, error) {
@@ -51,6 +70,14 @@ func New(dbPath, hostname string) (*Server, error) {
 }
 
 func (s *Server) HandleRoot(w http.ResponseWriter, r *http.Request) {
+	s.renderIndex(w, r, "de")
+}
+
+func (s *Server) HandleRootEN(w http.ResponseWriter, r *http.Request) {
+	s.renderIndex(w, r, "en")
+}
+
+func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, lang string) {
 	q := dbgen.New(s.DB)
 	apps, err := q.ListApps(r.Context())
 	if err != nil {
@@ -60,6 +87,7 @@ func (s *Server) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	data := pageData{
 		Hostname: s.Hostname,
 		Apps:     apps,
+		Lang:     lang,
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -141,9 +169,14 @@ func (s *Server) HandleAdminSave(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("url")
 	title := r.FormValue("title")
 	description := r.FormValue("description")
+	descriptionDE := r.FormValue("description_de")
 	thumbnail := r.FormValue("thumbnail")
 	sortOrderStr := r.FormValue("sort_order")
 	sortOrder, _ := strconv.ParseInt(sortOrderStr, 10, 64)
+	featured := int64(0)
+	if r.FormValue("featured") != "" {
+		featured = 1
+	}
 
 	q := dbgen.New(s.DB)
 	ctx := r.Context()
@@ -152,25 +185,29 @@ func (s *Server) HandleAdminSave(w http.ResponseWriter, r *http.Request) {
 
 	if id > 0 {
 		err := q.UpdateApp(ctx, dbgen.UpdateAppParams{
-			ID:          id,
-			Url:         url,
-			Title:       title,
-			Description: description,
-			Thumbnail:   &thumbnail,
-			SortOrder:   &sortOrder,
-			Prompt:      &prompt,
+			ID:            id,
+			Url:           url,
+			Title:         title,
+			Description:   description,
+			DescriptionDe: &descriptionDE,
+			Thumbnail:     &thumbnail,
+			SortOrder:     &sortOrder,
+			Featured:      featured,
+			Prompt:        &prompt,
 		})
 		if err != nil {
 			slog.Warn("update app", "error", err)
 		}
 	} else {
 		_, err := q.CreateApp(ctx, dbgen.CreateAppParams{
-			Url:         url,
-			Title:       title,
-			Description: description,
-			Thumbnail:   &thumbnail,
-			SortOrder:   &sortOrder,
-			Prompt:      &prompt,
+			Url:           url,
+			Title:         title,
+			Description:   description,
+			DescriptionDe: &descriptionDE,
+			Thumbnail:     &thumbnail,
+			SortOrder:     &sortOrder,
+			Featured:      featured,
+			Prompt:        &prompt,
 		})
 		if err != nil {
 			slog.Warn("create app", "error", err)
@@ -260,76 +297,97 @@ func (s *Server) seedApps() error {
 
 	seedData := []dbgen.CreateAppParams{
 		{
-			Url:         "https://holzeinschlag-at.exe.xyz/",
-			Title:       "Holzeinschlag Österreich",
-			Description: "Forest loss & carbon emissions by municipality. Satellite-derived harvest data 2001-2024 with ETS carbon pricing.",
-			Thumbnail:   ptr("/static/thumbs/holzeinschlag.jpg"),
-			SortOrder:   ptr(int64(1)),
-			Prompt:      ptr("Map Austria's forest harvest by municipality using Hansen satellite data. Calculate timber volume from tree cover loss, add carbon emissions and ETS liability at current prices. Let users select years and combine municipalities."),
+			Url:           "https://siedler-oesterreich.exe.xyz/",
+			Title:         "Siedler Österreich",
+			Description:   "Multiplayer browser game on real Austrian cadastral parcels. Explore, claim land, and put 30% of your municipality under nature protection.",
+			DescriptionDe: ptr("Multiplayer-Browserspiel auf echten österreichischen Katasterparzellen. Erkunde, beanspruche Flächen und stelle 30% deiner Gemeinde unter Naturschutz."),
+			Thumbnail:     ptr("/static/thumbs/siedler.jpg"),
+			SortOrder:     ptr(int64(1)),
+			Featured:      1,
+			Prompt:        ptr("Build a multiplayer browser game on real Austrian cadastral data. Players explore and claim parcels in their municipality, earn points for biodiversity, and win by putting 30% of the area under nature protection."),
 		},
 		{
-			Url:         "https://groundwater-at.exe.xyz/",
-			Title:       "Drought Risk Map",
-			Description: "Groundwater levels meet hydropower. Municipality drought risk from 2,118 stations and 156 power plants.",
-			Thumbnail:   ptr("/static/thumbs/groundwater.jpg"),
-			SortOrder:   ptr(int64(2)),
-			Prompt:      ptr("Build a drought risk map for Austria combining groundwater monitoring stations with hydropower plant locations. Show which municipalities face water stress based on declining groundwater trends and power generation dependency."),
+			Url:           "https://five-megapixel-conservation.exe.xyz/",
+			Title:         "5MP.globe Conservation",
+			Description:   "Real-time fire detection, deforestation monitoring, and patrol tracking for 162 African keystone protected areas.",
+			DescriptionDe: ptr("Echtzeit-Feuererkennung, Entwaldungs-Monitoring und Patrouillen-Tracking für 162 afrikanische Schutzgebiete."),
+			Thumbnail:     ptr("/static/thumbs/five-megapixel.jpg"),
+			SortOrder:     ptr(int64(2)),
+			Featured:      1,
+			Prompt:        ptr("Build a conservation monitoring dashboard for African protected areas. Combine NASA FIRMS fire alerts, forest change data, and ranger patrol tracks on an interactive globe. Alert on new fires inside park boundaries."),
 		},
 		{
-			Url:         "https://msf-prep.exe.xyz/",
-			Title:       "MSF Medical Training",
-			Description: "Interactive exam trainer based on Médecins Sans Frontières clinical guidelines. Practice protocols before deployment.",
-			Thumbnail:   ptr("/static/thumbs/msf-prep.jpg"),
-			SortOrder:   ptr(int64(3)),
-			Prompt:      ptr("Create an interactive exam trainer for MSF medical guidelines. Generate questions from the clinical protocols, track progress, show explanations with references back to the official documentation."),
+			Url:           "https://groundwater-at.exe.xyz/",
+			Title:         "GW Power – Grundwasser Österreich",
+			Description:   "Groundwater status for every Austrian cadastral municipality: level trends, precipitation divergence, nitrate pollution and drought pressure in one index.",
+			DescriptionDe: ptr("Grundwasserstatus jeder österreichischen Katastralgemeinde: Pegeltrends, Niederschlagsabweichung, Nitratbelastung und Dürredruck in einem Index."),
+			Thumbnail:     ptr("/static/thumbs/groundwater.jpg"),
+			SortOrder:     ptr(int64(3)),
+			Featured:      1,
+			Prompt:        ptr("Build a drought risk map for Austria combining groundwater monitoring stations with hydropower plant locations. Show which municipalities face water stress based on declining groundwater trends and power generation dependency."),
 		},
 		{
-			Url:         "https://landcruiser-spares.exe.xyz:8001/",
-			Title:       "Land Cruiser 100 Blueprint",
-			Description: "3D wireframe assembly viewer for Toyota UZJ100/FZJ100. Exploded views from service manuals for parts identification.",
-			Thumbnail:   ptr("/static/thumbs/landcruiser.jpg"),
-			SortOrder:   ptr(int64(4)),
-			Prompt:      ptr("Build a 3D wireframe viewer for the Toyota Land Cruiser 100 series. Extract part diagrams from service manuals, create exploded views by system (engine, transmission, suspension), let users identify and search for parts."),
+			Url:           "https://holzeinschlag-at.exe.xyz/",
+			Title:         "Holzeinschlag Österreich",
+			Description:   "Forest loss & carbon emissions by municipality. Satellite-derived harvest data 2001-2024 with ETS carbon pricing.",
+			DescriptionDe: ptr("Waldverlust & CO₂-Emissionen pro Gemeinde. Satellitengestützte Einschlagsdaten 2001-2024 mit ETS-CO₂-Bepreisung."),
+			Thumbnail:     ptr("/static/thumbs/holzeinschlag.jpg"),
+			SortOrder:     ptr(int64(4)),
+			Prompt:        ptr("Map Austria's forest harvest by municipality using Hansen satellite data. Calculate timber volume from tree cover loss, add carbon emissions and ETS liability at current prices. Let users select years and combine municipalities."),
 		},
 		{
-			Url:         "https://schools-at.exe.xyz/",
-			Title:       "Schulqualität Österreich",
-			Description: "5,752 schools across 2,120 municipalities. Service quality ratings, class sizes, and all-day school coverage.",
-			Thumbnail:   ptr("/static/thumbs/schools.jpg"),
-			SortOrder:   ptr(int64(5)),
-			Prompt:      ptr("Map all Austrian schools by municipality with quality indicators. Include student-teacher ratios, all-day school availability, and compare educational supply to school-age population. Help parents find schools near them."),
+			Url:           "https://landcruiser-spares.exe.xyz:8001/",
+			Title:         "Land Cruiser 100 Blueprint",
+			Description:   "3D wireframe assembly viewer for Toyota UZJ100/FZJ100. Exploded views from service manuals for parts identification.",
+			DescriptionDe: ptr("3D-Drahtgitter-Viewer für Toyota UZJ100/FZJ100. Explosionszeichnungen aus Werkstatthandbüchern zur Teile-Identifikation."),
+			Thumbnail:     ptr("/static/thumbs/landcruiser.jpg"),
+			SortOrder:     ptr(int64(5)),
+			Prompt:        ptr("Build a 3D wireframe viewer for the Toyota Land Cruiser 100 series. Extract part diagrams from service manuals, create exploded views by system (engine, transmission, suspension), let users identify and search for parts."),
 		},
 		{
-			Url:         "https://maternity-ward-closure.exe.xyz/",
-			Title:       "Geburtshilfe-Erreichbarkeit",
-			Description: "Maternity ward accessibility via OSRM routing. Simulate closures to see drive time impacts on 90k women aged 15-44.",
-			Thumbnail:   ptr("/static/thumbs/maternity.jpg"),
-			SortOrder:   ptr(int64(6)),
-			Prompt:      ptr("Model maternity ward accessibility in Austria using real driving times. Weight by female population 15-44, show which areas exceed 30/45 min drive times. Let users simulate ward closures and see the impact."),
+			Url:           "https://schools-at.exe.xyz/",
+			Title:         "Schulqualität Österreich",
+			Description:   "5,752 schools across 2,120 municipalities. Service quality ratings, class sizes, and all-day school coverage.",
+			DescriptionDe: ptr("5.752 Schulen in 2.120 Gemeinden. Qualitätsbewertungen, Klassengrößen und ganztägige Schulangebote."),
+			Thumbnail:     ptr("/static/thumbs/schools.jpg"),
+			SortOrder:     ptr(int64(6)),
+			Prompt:        ptr("Map all Austrian schools by municipality with quality indicators. Include student-teacher ratios, all-day school availability, and compare educational supply to school-age population. Help parents find schools near them."),
 		},
 		{
-			Url:         "https://child-care-access-at.exe.xyz/",
-			Title:       "Kinderbetreuung Österreich",
-			Description: "9,863 childcare facilities mapped. 55% average coverage rate, 848 municipalities without infant care.",
-			Thumbnail:   ptr("/static/thumbs/childcare.jpg"),
-			SortOrder:   ptr(int64(7)),
-			Prompt:      ptr("Visualize childcare availability across Austrian municipalities. Show coverage rates, identify gaps where no infant care exists, compare facility quality indicators. Download data for analysis."),
+			Url:           "https://maternity-ward-closure.exe.xyz/",
+			Title:         "Geburtshilfe-Erreichbarkeit",
+			Description:   "Maternity ward accessibility via OSRM routing. Simulate closures to see drive time impacts on 90k women aged 15-44.",
+			DescriptionDe: ptr("Erreichbarkeit von Geburtenstationen via OSRM-Routing. Simuliere Schließungen und deren Fahrzeit-Folgen für 90k Frauen (15-44)."),
+			Thumbnail:     ptr("/static/thumbs/maternity.jpg"),
+			SortOrder:     ptr(int64(7)),
+			Prompt:        ptr("Model maternity ward accessibility in Austria using real driving times. Weight by female population 15-44, show which areas exceed 30/45 min drive times. Let users simulate ward closures and see the impact."),
 		},
 		{
-			Url:         "https://austria-power.exe.xyz/",
-			Title:       "Wind Grid Capacity",
-			Description: "1,578 turbines, 441 substations, 30 GW installed. Grid feed-in capacity analysis for wind expansion.",
-			Thumbnail:   ptr("/static/thumbs/power.jpg"),
-			SortOrder:   ptr(int64(8)),
-			Prompt:      ptr("Map Austria's wind turbines and transformer stations. Use Austro Control obstacle data to get turbine heights. Analyze grid capacity for new wind installations by district, show where expansion is feasible."),
+			Url:           "https://child-care-access-at.exe.xyz/",
+			Title:         "Kinderbetreuung Österreich",
+			Description:   "9,863 childcare facilities mapped. 55% average coverage rate, 848 municipalities without infant care.",
+			DescriptionDe: ptr("9.863 Betreuungseinrichtungen kartiert. 55% durchschnittliche Betreuungsquote, 848 Gemeinden ohne Kleinkindbetreuung."),
+			Thumbnail:     ptr("/static/thumbs/childcare.jpg"),
+			SortOrder:     ptr(int64(8)),
+			Prompt:        ptr("Visualize childcare availability across Austrian municipalities. Show coverage rates, identify gaps where no infant care exists, compare facility quality indicators. Download data for analysis."),
 		},
 		{
-			Url:         "https://farm-subsidies-austria.exe.xyz/",
-			Title:       "Agrarsubventionen Österreich",
-			Description: "€3.6B in EU farm payments visualized by municipality. Compare actual vs expected allocations across 2,117 communes.",
-			Thumbnail:   ptr("/static/thumbs/farm-subsidies.jpg"),
-			SortOrder:   ptr(int64(9)),
-			Prompt:      ptr("Show EU farm subsidy payments by Austrian municipality. Compare actual payments to what you'd expect based on agricultural area and regional factors. Help farmers understand what programs they might qualify for."),
+			Url:           "https://austria-power.exe.xyz/",
+			Title:         "Netzkapazität Österreich",
+			Description:   "All 1,578 wind turbines with 6,631 MW capacity. Grid capacity, 441 substations, transmission lines, and feed-in potential for new wind projects.",
+			DescriptionDe: ptr("Alle 1.578 Windkraftanlagen mit 6.631 MW Leistung. Netzkapazitäten, 441 Umspannwerke, Hochspannungsleitungen und Einspeisepotenzial für neue Windprojekte."),
+			Thumbnail:     ptr("/static/thumbs/power.jpg"),
+			SortOrder:     ptr(int64(9)),
+			Prompt:        ptr("Map Austria's wind turbines and transformer stations. Use Austro Control obstacle data to get turbine heights. Analyze grid capacity for new wind installations by district, show where expansion is feasible."),
+		},
+		{
+			Url:           "https://farm-subsidies-austria.exe.xyz/",
+			Title:         "Agrarsubventionen Österreich",
+			Description:   "EU farm payments 2023-2025 visualized by municipality. €2B/year across 2,053 communes — compare actual vs expected allocations.",
+			DescriptionDe: ptr("EU-Agrarzahlungen 2023-2025 pro Gemeinde visualisiert. 2 Mrd. €/Jahr in 2.053 Gemeinden — tatsächliche vs. erwartete Zuteilungen."),
+			Thumbnail:     ptr("/static/thumbs/farm-subsidies.jpg"),
+			SortOrder:     ptr(int64(10)),
+			Prompt:        ptr("Show EU farm subsidy payments by Austrian municipality. Compare actual payments to what you'd expect based on agricultural area and regional factors. Help farmers understand what programs they might qualify for."),
 		},
 	}
 
@@ -352,11 +410,21 @@ func (s *Server) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/xml")
 	w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://kohlschwarz.at:8000/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en"/>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://kohlschwarz.at:8000/en</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://kohlschwarz.at:8000/impressum</loc>
@@ -364,7 +432,17 @@ func (s *Server) HandleSitemap(w http.ResponseWriter, r *http.Request) {
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://kohlschwarz.at:8000/en/impressum</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://kohlschwarz.at:8000/datenschutz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://kohlschwarz.at:8000/en/datenschutz</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -416,15 +494,24 @@ GitHub: https://github.com/raffopenssh/kohlschwarz-think-tank
 }
 
 func (s *Server) HandleImpressum(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.renderTemplate(w, "impressum.html", nil); err != nil {
-		slog.Warn("render template", "url", r.URL.Path, "error", err)
-	}
+	s.renderLegal(w, r, "impressum.html", "de")
+}
+
+func (s *Server) HandleImpressumEN(w http.ResponseWriter, r *http.Request) {
+	s.renderLegal(w, r, "impressum.html", "en")
 }
 
 func (s *Server) HandleDatenschutz(w http.ResponseWriter, r *http.Request) {
+	s.renderLegal(w, r, "datenschutz.html", "de")
+}
+
+func (s *Server) HandleDatenschutzEN(w http.ResponseWriter, r *http.Request) {
+	s.renderLegal(w, r, "datenschutz.html", "en")
+}
+
+func (s *Server) renderLegal(w http.ResponseWriter, r *http.Request, tmpl, lang string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.renderTemplate(w, "datenschutz.html", nil); err != nil {
+	if err := s.renderTemplate(w, tmpl, pageData{Lang: lang}); err != nil {
 		slog.Warn("render template", "url", r.URL.Path, "error", err)
 	}
 }
@@ -450,8 +537,12 @@ func securityHeaders(next http.Handler) http.Handler {
 func (s *Server) Serve(addr string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.HandleRoot)
+	mux.HandleFunc("GET /en", s.HandleRootEN)
+	mux.HandleFunc("GET /en/{$}", s.HandleRootEN)
 	mux.HandleFunc("GET /impressum", s.HandleImpressum)
+	mux.HandleFunc("GET /en/impressum", s.HandleImpressumEN)
 	mux.HandleFunc("GET /datenschutz", s.HandleDatenschutz)
+	mux.HandleFunc("GET /en/datenschutz", s.HandleDatenschutzEN)
 	mux.HandleFunc("GET /sitemap.xml", s.HandleSitemap)
 	mux.HandleFunc("GET /robots.txt", s.HandleRobots)
 	mux.HandleFunc("GET /admin", s.HandleAdmin)

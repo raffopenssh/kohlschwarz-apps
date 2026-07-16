@@ -1,19 +1,28 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{if .DE}}de{{else}}en{{end}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datenschutzerklärung | Kohlschwarz Think-Tank</title>
+    <title>{{if .DE}}Datenschutzerklärung{{else}}Privacy Policy{{end}} | Kohlschwarz Think-Tank</title>
     <meta name="robots" content="noindex">
+    <link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/datenschutz">
+    <link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en/datenschutz">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 10,90' fill='%23111'/></svg>">
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 <body>
     <main class="legal">
         <nav class="legal-nav">
+            {{if .DE}}
             <a href="/">← Zurück</a>
+            <span class="lang-switch"><span class="lang-active">DE</span> · <a href="/en/datenschutz">EN</a></span>
+            {{else}}
+            <a href="/en">← Back</a>
+            <span class="lang-switch"><a href="/datenschutz">DE</a> · <span class="lang-active">EN</span></span>
+            {{end}}
         </nav>
 
+        {{if .DE}}
         <h1>Datenschutzerklärung</h1>
 
         <section>
@@ -29,10 +38,10 @@
 
         <section>
             <h2>2. Erhobene Daten</h2>
-            
+
             <h3>2.1 Server-Logfiles</h3>
             <p>
-                Bei jedem Zugriff auf diese Website werden automatisch Informationen erfasst, 
+                Bei jedem Zugriff auf diese Website werden automatisch Informationen erfasst,
                 die Ihr Browser übermittelt. Dies umfasst:
             </p>
             <ul>
@@ -44,14 +53,14 @@
                 <li>Referrer-URL</li>
             </ul>
             <p>
-                Diese Daten werden zur Sicherstellung des Betriebs und zur Fehleranalyse 
+                Diese Daten werden zur Sicherstellung des Betriebs und zur Fehleranalyse
                 verwendet. Die Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).
             </p>
 
             <h3>2.2 Nutzungsstatistiken</h3>
             <p>
-                Wir erfassen anonymisierte Klickzähler für die verlinkten Anwendungen, 
-                um die Nutzung der Website zu verstehen. Es werden dabei keine 
+                Wir erfassen anonymisierte Klickzähler für die verlinkten Anwendungen,
+                um die Nutzung der Website zu verstehen. Es werden dabei keine
                 personenbezogenen Daten gespeichert.
             </p>
         </section>
@@ -66,8 +75,8 @@
         <section>
             <h2>4. Speicherdauer</h2>
             <p>
-                Server-Logfiles werden vom Hosting-Anbieter (exe.dev) verwaltet und 
-                nach dessen Richtlinien aufbewahrt. Die anonymisierten Klickzähler 
+                Server-Logfiles werden vom Hosting-Anbieter (exe.dev) verwaltet und
+                nach dessen Richtlinien aufbewahrt. Die anonymisierten Klickzähler
                 werden unbefristet gespeichert, enthalten jedoch keine personenbezogenen Daten.
             </p>
         </section>
@@ -75,8 +84,8 @@
         <section>
             <h2>5. Verlinkte Anwendungen</h2>
             <p>
-                Diese Website verlinkt zu weiteren Anwendungen des Betreibers auf 
-                verschiedenen Subdomains (*.exe.xyz). Diese Anwendungen speichern 
+                Diese Website verlinkt zu weiteren Anwendungen des Betreibers auf
+                verschiedenen Subdomains (*.exe.xyz). Diese Anwendungen speichern
                 keine personenbezogenen Daten und verwenden keine Cookies.
             </p>
             <p>
@@ -88,9 +97,9 @@
                 <li><strong>cdn.jsdelivr.net</strong> – Chart.js Diagrammbibliothek (keine Tracking-Cookies)</li>
             </ul>
             <p>
-                Bei der Nutzung dieser CDN-Dienste wird Ihre IP-Adresse an die jeweiligen 
-                Anbieter übermittelt. Dies ist technisch notwendig, um die Ressourcen 
-                bereitzustellen. Die Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO 
+                Bei der Nutzung dieser CDN-Dienste wird Ihre IP-Adresse an die jeweiligen
+                Anbieter übermittelt. Dies ist technisch notwendig, um die Ressourcen
+                bereitzustellen. Die Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO
                 (berechtigtes Interesse an einer funktionierenden Website).
             </p>
         </section>
@@ -107,7 +116,7 @@
                 <li>Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)</li>
             </ul>
             <p>
-                Zur Ausübung dieser Rechte kontaktieren Sie uns bitte unter der oben 
+                Zur Ausübung dieser Rechte kontaktieren Sie uns bitte unter der oben
                 angegebenen E-Mail-Adresse.
             </p>
         </section>
@@ -115,7 +124,7 @@
         <section>
             <h2>7. Beschwerderecht</h2>
             <p>
-                Sie haben das Recht, sich bei der österreichischen Datenschutzbehörde 
+                Sie haben das Recht, sich bei der österreichischen Datenschutzbehörde
                 zu beschweren:
             </p>
             <p>
@@ -129,20 +138,148 @@
         <section>
             <h2>8. Hosting</h2>
             <p>
-                Diese Website wird bei exe.dev (Bold Software, Inc., USA) gehostet. 
-                Die Server befinden sich in den USA. Die Datenübermittlung in die USA 
-                erfolgt auf Grundlage von Art. 49 Abs. 1 lit. a DSGVO (Einwilligung durch Nutzung) 
+                Diese Website wird bei exe.dev (Bold Software, Inc., USA) gehostet.
+                Die Server befinden sich in den USA. Die Datenübermittlung in die USA
+                erfolgt auf Grundlage von Art. 49 Abs. 1 lit. a DSGVO (Einwilligung durch Nutzung)
                 bzw. Art. 49 Abs. 1 lit. b DSGVO (Erfüllung des Nutzungsvertrags).
-                Weitere Informationen finden Sie unter 
+                Weitere Informationen finden Sie unter
                 <a href="https://exe.dev/docs/privacy-notice.md" target="_blank" rel="noopener">exe.dev Privacy Notice</a>.
             </p>
         </section>
 
-        <p class="legal-date">Stand: Januar 2025</p>
+        <p class="legal-date">Stand: Juli 2026</p>
 
         <footer class="legal-footer">
-            <a href="/">Startseite</a> · <a href="/impressum">Impressum</a> · <a href="https://github.com/raffopenssh/kohlschwarz-think-tank" target="_blank" rel="noopener" title="Source on GitHub"><svg class="github-icon" viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+            <a href="/">Startseite</a> · <a href="/impressum">Impressum</a>
         </footer>
+        {{else}}
+        <h1>Privacy Policy</h1>
+
+        <section>
+            <h2>1. Controller</h2>
+            <p>
+                Raffael Hickisch<br>
+                Goldschlagstraße 23/18<br>
+                1150 Vienna<br>
+                Austria<br>
+                Email: <a href="#" class="obf-email"></a>
+            </p>
+        </section>
+
+        <section>
+            <h2>2. Data collected</h2>
+
+            <h3>2.1 Server log files</h3>
+            <p>
+                Each time you access this website, information transmitted by your browser
+                is automatically recorded. This includes:
+            </p>
+            <ul>
+                <li>IP address (anonymized)</li>
+                <li>Date and time of the request</li>
+                <li>Requested page/file</li>
+                <li>Browser type and version</li>
+                <li>Operating system</li>
+                <li>Referrer URL</li>
+            </ul>
+            <p>
+                This data is used to ensure operation and for error analysis.
+                The legal basis is Art. 6(1)(f) GDPR (legitimate interest).
+            </p>
+
+            <h3>2.2 Usage statistics</h3>
+            <p>
+                We record anonymized click counters for the linked applications to
+                understand how the website is used. No personal data is stored.
+            </p>
+        </section>
+
+        <section>
+            <h2>3. Cookies</h2>
+            <p>
+                This website does not use cookies or third-party tracking services.
+            </p>
+        </section>
+
+        <section>
+            <h2>4. Retention period</h2>
+            <p>
+                Server log files are managed by the hosting provider (exe.dev) and
+                retained according to its policies. The anonymized click counters are
+                stored indefinitely but contain no personal data.
+            </p>
+        </section>
+
+        <section>
+            <h2>5. Linked applications</h2>
+            <p>
+                This website links to further applications by the operator on
+                various subdomains (*.exe.xyz). These applications do not store
+                personal data and do not use cookies.
+            </p>
+            <p>
+                Some applications load resources from the following third parties:
+            </p>
+            <ul>
+                <li><strong>unpkg.com</strong> – Leaflet map library (no tracking cookies)</li>
+                <li><strong>cdnjs.cloudflare.com</strong> – Font Awesome icons (no tracking cookies)</li>
+                <li><strong>cdn.jsdelivr.net</strong> – Chart.js chart library (no tracking cookies)</li>
+            </ul>
+            <p>
+                When these CDN services are used, your IP address is transmitted to the
+                respective providers. This is technically necessary to deliver the
+                resources. The legal basis is Art. 6(1)(f) GDPR (legitimate interest
+                in a functioning website).
+            </p>
+        </section>
+
+        <section>
+            <h2>6. Your rights</h2>
+            <p>You have the right to:</p>
+            <ul>
+                <li>Access your stored data (Art. 15 GDPR)</li>
+                <li>Rectification of inaccurate data (Art. 16 GDPR)</li>
+                <li>Erasure of your data (Art. 17 GDPR)</li>
+                <li>Restriction of processing (Art. 18 GDPR)</li>
+                <li>Data portability (Art. 20 GDPR)</li>
+                <li>Object to processing (Art. 21 GDPR)</li>
+            </ul>
+            <p>
+                To exercise these rights, please contact us at the email address given above.
+            </p>
+        </section>
+
+        <section>
+            <h2>7. Right to lodge a complaint</h2>
+            <p>
+                You have the right to lodge a complaint with the Austrian Data Protection Authority:
+            </p>
+            <p>
+                Österreichische Datenschutzbehörde<br>
+                Barichgasse 40-42<br>
+                1030 Vienna<br>
+                <a href="https://www.dsb.gv.at" target="_blank" rel="noopener">www.dsb.gv.at</a>
+            </p>
+        </section>
+
+        <section>
+            <h2>8. Hosting</h2>
+            <p>
+                This website is hosted at exe.dev (Bold Software, Inc., USA).
+                The servers are located in the USA. Data transfer to the USA takes place
+                on the basis of Art. 49(1)(a) GDPR (consent through use)
+                and Art. 49(1)(b) GDPR (performance of the usage contract).
+                For more information see the
+                <a href="https://exe.dev/docs/privacy-notice.md" target="_blank" rel="noopener">exe.dev Privacy Notice</a>.
+            </p>
+        </section>
+
+        <p class="legal-date">Last updated: July 2026</p>
+
+        <footer class="legal-footer">
+            <a href="/en">Home</a> · <a href="/en/impressum">Imprint</a>
+        </footer>
+        {{end}}
     </main>
 <script>
 (function(){

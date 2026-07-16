@@ -1,12 +1,12 @@
 -- name: ListApps :many
-SELECT * FROM apps ORDER BY click_count DESC, sort_order ASC, id ASC;
+SELECT * FROM apps ORDER BY featured DESC, CASE WHEN featured = 1 THEN sort_order END ASC, click_count DESC, sort_order ASC, id ASC;
 
 -- name: GetApp :one
 SELECT * FROM apps WHERE id = ?;
 
 -- name: CreateApp :one
-INSERT INTO apps (url, title, description, shelley_command, thumbnail, sort_order, prompt, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+INSERT INTO apps (url, title, description, description_de, shelley_command, thumbnail, sort_order, featured, prompt, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: UpdateApp :exec
@@ -14,9 +14,11 @@ UPDATE apps SET
     url = ?,
     title = ?,
     description = ?,
+    description_de = ?,
     shelley_command = ?,
     thumbnail = ?,
     sort_order = ?,
+    featured = ?,
     prompt = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;

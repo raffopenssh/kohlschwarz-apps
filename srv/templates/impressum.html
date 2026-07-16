@@ -1,24 +1,33 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{if .DE}}de{{else}}en{{end}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impressum | Kohlschwarz Think-Tank</title>
+    <title>{{if .DE}}Impressum{{else}}Imprint{{end}} | Kohlschwarz Think-Tank</title>
     <meta name="robots" content="noindex">
+    <link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/impressum">
+    <link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en/impressum">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 10,90' fill='%23111'/></svg>">
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 <body>
     <main class="legal">
         <nav class="legal-nav">
+            {{if .DE}}
             <a href="/">← Zurück</a>
+            <span class="lang-switch"><span class="lang-active">DE</span> · <a href="/en/impressum">EN</a></span>
+            {{else}}
+            <a href="/en">← Back</a>
+            <span class="lang-switch"><a href="/impressum">DE</a> · <span class="lang-active">EN</span></span>
+            {{end}}
         </nav>
 
+        {{if .DE}}
         <h1>Impressum</h1>
 
         <section>
             <h2>Angaben gemäß § 25 MedienG und § 5 ECG</h2>
-            
+
             <p><strong>Medieninhaber und Herausgeber:</strong></p>
             <p>
                 Raffael Hickisch<br>
@@ -36,9 +45,9 @@
         <section>
             <h2>Grundlegende Richtung</h2>
             <p>
-                Kohlschwarz Think-Tank ist ein nicht-kommerzielles Projekt zur Erstellung und 
-                Veröffentlichung von Datenvisualisierungen und Analysen zu österreichischen 
-                öffentlichen Daten. Die Anwendungen dienen der Information der Öffentlichkeit 
+                Kohlschwarz Think-Tank ist ein nicht-kommerzielles Projekt zur Erstellung und
+                Veröffentlichung von Datenvisualisierungen und Analysen zu österreichischen
+                öffentlichen Daten. Die Anwendungen dienen der Information der Öffentlichkeit
                 und der Demonstration von Datenverarbeitungsmethoden.
             </p>
         </section>
@@ -46,12 +55,12 @@
         <section>
             <h2>Haftungsausschluss</h2>
             <p>
-                Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt. 
-                Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte kann jedoch 
+                Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt.
+                Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte kann jedoch
                 keine Gewähr übernommen werden. Die Nutzung der Inhalte erfolgt auf eigene Gefahr.
             </p>
             <p>
-                Für die Inhalte externer Links übernehmen wir keine Haftung. Für den Inhalt 
+                Für die Inhalte externer Links übernehmen wir keine Haftung. Für den Inhalt
                 der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich.
             </p>
         </section>
@@ -59,16 +68,71 @@
         <section>
             <h2>Urheberrecht</h2>
             <p>
-                Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten 
-                unterliegen dem österreichischen Urheberrecht. Soweit nicht anders angegeben, 
-                stehen die Datenvisualisierungen und Analysen unter einer offenen Lizenz zur 
+                Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten
+                unterliegen dem österreichischen Urheberrecht. Soweit nicht anders angegeben,
+                stehen die Datenvisualisierungen und Analysen unter einer offenen Lizenz zur
                 Weiterverwendung zur Verfügung.
             </p>
         </section>
 
         <footer class="legal-footer">
-            <a href="/">Startseite</a> · <a href="/datenschutz">Datenschutz</a> · <a href="https://github.com/raffopenssh/kohlschwarz-think-tank" target="_blank" rel="noopener" title="Source on GitHub"><svg class="github-icon" viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+            <a href="/">Startseite</a> · <a href="/datenschutz">Datenschutz</a>
         </footer>
+        {{else}}
+        <h1>Imprint</h1>
+
+        <section>
+            <h2>Information pursuant to § 25 Austrian Media Act (MedienG) and § 5 E-Commerce Act (ECG)</h2>
+
+            <p><strong>Media owner and publisher:</strong></p>
+            <p>
+                Raffael Hickisch<br>
+                Goldschlagstraße 23/18<br>
+                1150 Vienna<br>
+                Austria
+            </p>
+
+            <p><strong>Contact:</strong></p>
+            <p>
+                Email: <a href="#" class="obf-email"></a>
+            </p>
+        </section>
+
+        <section>
+            <h2>Editorial mission</h2>
+            <p>
+                Kohlschwarz Think-Tank is a non-commercial project creating and publishing
+                data visualizations and analyses of Austrian public data. The applications
+                serve to inform the public and demonstrate data processing methods.
+            </p>
+        </section>
+
+        <section>
+            <h2>Disclaimer</h2>
+            <p>
+                The contents of this website have been created with the greatest possible care.
+                However, no guarantee can be given for the correctness, completeness and
+                timeliness of the contents. Use of the contents is at your own risk.
+            </p>
+            <p>
+                We accept no liability for the contents of external links. The operators of
+                the linked pages are solely responsible for their content.
+            </p>
+        </section>
+
+        <section>
+            <h2>Copyright</h2>
+            <p>
+                The contents and works created by the site operator on these pages are subject
+                to Austrian copyright law. Unless stated otherwise, the data visualizations
+                and analyses are available for reuse under an open license.
+            </p>
+        </section>
+
+        <footer class="legal-footer">
+            <a href="/en">Home</a> · <a href="/en/datenschutz">Privacy</a>
+        </footer>
+        {{end}}
     </main>
 <script>
 (function(){

@@ -1,38 +1,60 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{if .DE}}de{{else}}en{{end}}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- Primary Meta Tags -->
+    {{if .DE}}
     <title>Kohlschwarz Think-Tank | Civic Data Apps für Österreich</title>
     <meta name="title" content="Kohlschwarz Think-Tank | Civic Data Apps für Österreich">
-    <meta name="description" content="Open Data Visualisierungen für Österreich: Waldverlust & CO₂-Emissionen, Grundwasser & Dürrerisiko, Schulqualität, Geburtshilfe-Erreichbarkeit, Kinderbetreuung, Windkraft-Netzkapazität, Agrarsubventionen. Alle Daten & Methoden offen verfügbar.">
-    <meta name="keywords" content="Open Data Österreich, Datenvisualisierung, Holzeinschlag, Waldverlust, CO2 Emissionen, Grundwasser, Dürre, Schulen Österreich, Geburtshilfe, Kinderbetreuung, Windkraft, Agrarsubventionen, CAP Zahlungen">
+    <meta name="description" content="Open Data Visualisierungen für Österreich: Siedler-Katasterspiel, Naturschutz-Monitoring, Grundwasser & Dürrerisiko, Waldverlust & CO₂, Schulqualität, Geburtshilfe-Erreichbarkeit, Kinderbetreuung, Netzkapazität, Agrarsubventionen. Alle Daten & Methoden offen verfügbar.">
+    {{else}}
+    <title>Kohlschwarz Think-Tank | Civic Data Apps for Austria</title>
+    <meta name="title" content="Kohlschwarz Think-Tank | Civic Data Apps for Austria">
+    <meta name="description" content="Open data visualizations for Austria: cadastral settlement game, conservation monitoring, groundwater & drought risk, forest loss & CO₂, school quality, maternity ward access, childcare, grid capacity, farm subsidies. All data & methods openly available.">
+    {{end}}
+    <meta name="keywords" content="Open Data Österreich, Datenvisualisierung, Holzeinschlag, Waldverlust, CO2 Emissionen, Grundwasser, Dürre, Schulen Österreich, Geburtshilfe, Kinderbetreuung, Windkraft, Netzkapazität, Agrarsubventionen, Kataster, Naturschutz, conservation monitoring">
     <meta name="author" content="Kohlschwarz Think-Tank">
     <meta name="robots" content="index, follow">
     <meta name="geo.region" content="AT">
     <meta name="geo.placename" content="Wien">
-    <link rel="canonical" href="https://kohlschwarz.at:8000/">
-    
+    <link rel="canonical" href="https://kohlschwarz.at:8000/{{if not .DE}}en{{end}}">
+    <link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/">
+    <link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en">
+    <link rel="alternate" hreflang="x-default" href="https://kohlschwarz.at:8000/">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://kohlschwarz.at:8000/">
+    <meta property="og:url" content="https://kohlschwarz.at:8000/{{if not .DE}}en{{end}}">
+    {{if .DE}}
     <meta property="og:title" content="Kohlschwarz Think-Tank | Civic Data Apps für Österreich">
-    <meta property="og:description" content="Open Data Visualisierungen für Österreich: Waldverlust, Dürrerisiko, Schulen, Geburtshilfe, Kinderbetreuung, Windkraft, Agrarsubventionen. Daten & Methoden offen verfügbar.">
+    <meta property="og:description" content="Open Data Visualisierungen für Österreich: Katasterspiel, Naturschutz-Monitoring, Grundwasser, Waldverlust, Schulen, Geburtshilfe, Kinderbetreuung, Netzkapazität, Agrarsubventionen.">
+    <meta property="og:locale" content="de_AT">
+    <meta property="og:locale:alternate" content="en_US">
+    {{else}}
+    <meta property="og:title" content="Kohlschwarz Think-Tank | Civic Data Apps for Austria">
+    <meta property="og:description" content="Open data visualizations for Austria: cadastral game, conservation monitoring, groundwater, forest loss, schools, maternity access, childcare, grid capacity, farm subsidies.">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_AT">
+    {{end}}
     <meta property="og:image" content="https://kohlschwarz.at:8000/static/og-image.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="Kohlschwarz Think-Tank">
-    <meta property="og:locale" content="de_AT">
-    
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://kohlschwarz.at:8000/">
+    <meta name="twitter:url" content="https://kohlschwarz.at:8000/{{if not .DE}}en{{end}}">
+    {{if .DE}}
     <meta name="twitter:title" content="Kohlschwarz Think-Tank | Civic Data Apps für Österreich">
-    <meta name="twitter:description" content="Open Data Visualisierungen: Waldverlust, Dürrerisiko, Schulen, Geburtshilfe, Kinderbetreuung, Windkraft, Agrarsubventionen.">
+    <meta name="twitter:description" content="Open Data Visualisierungen: Katasterspiel, Naturschutz, Grundwasser, Waldverlust, Schulen, Geburtshilfe, Kinderbetreuung, Netzkapazität, Agrarsubventionen.">
+    {{else}}
+    <meta name="twitter:title" content="Kohlschwarz Think-Tank | Civic Data Apps for Austria">
+    <meta name="twitter:description" content="Open data visualizations: cadastral game, conservation, groundwater, forest loss, schools, maternity access, childcare, grid capacity, farm subsidies.">
+    {{end}}
     <meta name="twitter:image" content="https://kohlschwarz.at:8000/static/og-image.jpg">
-    
+
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -40,7 +62,7 @@
       "@type": "Organization",
       "name": "Kohlschwarz Think-Tank",
       "url": "https://kohlschwarz.at:8000",
-      "description": "Civic data apps built for Austria - Open Data Visualisierungen zu Waldverlust, Dürrerisiko, Schulen, Geburtshilfe, Kinderbetreuung, Windkraft und Agrarsubventionen.",
+      "description": "Civic data apps built for Austria - open data visualizations on forest loss, drought risk, schools, maternity access, childcare, wind power and farm subsidies.",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Wien",
@@ -57,46 +79,53 @@
       "@type": "WebSite",
       "name": "Kohlschwarz Think-Tank",
       "url": "https://kohlschwarz.at:8000",
-      "description": "Open Data Visualisierungen für Österreich",
-      "inLanguage": "de-AT"
+      "description": "{{if .DE}}Open Data Visualisierungen für Österreich{{else}}Open data visualizations for Austria{{end}}",
+      "inLanguage": "{{if .DE}}de-AT{{else}}en{{end}}"
     }
     </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 10,90' fill='%23111'/></svg>">
-    
+
     <!-- Theme -->
     <meta name="theme-color" content="#111111">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <link rel="stylesheet" href="/static/style.css?v=4">
+
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 <body>
     <main>
+        <nav class="lang-switch" aria-label="Language">
+            {{if .DE}}<span class="lang-active">DE</span> · <a href="/en" hreflang="en">EN</a>{{else}}<a href="/" hreflang="de">DE</a> · <span class="lang-active">EN</span>{{end}}
+        </nav>
         <header>
             <h1>Kohlschwarz Think-Tank</h1>
+            {{if .DE}}
+            <p class="tagline">Civic-Data-Apps für Österreich, gebaut mit Shelley auf <a href="https://exe.dev">exe.dev</a></p>
+            {{else}}
             <p class="tagline">Civic data apps built for Austria with Shelley on <a href="https://exe.dev">exe.dev</a></p>
+            {{end}}
         </header>
 
         <div class="grid">
+            {{$page := .}}
             {{range .Apps}}
-            <a href="{{.Url}}" class="card" target="_blank" rel="noopener" data-id="{{.ID}}" onclick="trackClick({{.ID}})">
+            <a href="{{.Url}}" class="card{{if eq .Featured 1}} featured{{end}}" target="_blank" rel="noopener" data-id="{{.ID}}" onclick="trackClick({{.ID}})">
                 {{if .Thumbnail}}
-                <div class="thumb" style="background-image: url('{{.Thumbnail}}')"></div>
+                <div class="thumb" style="background-image: url('{{.Thumbnail}}')">{{if eq .Featured 1}}<span class="badge-new">{{if $page.DE}}Neu{{else}}New{{end}}</span>{{end}}</div>
                 {{end}}
                 <div class="content">
                     <div class="title-row">
                         <h2>{{.Title}}</h2>
-                        {{if .ClickCount}}<span class="click-count">{{.ClickCount}}</span>{{end}}
+                        {{with $page.Clicks .}}<span class="click-count">{{.}}</span>{{end}}
                     </div>
-                    <p>{{.Description}}</p>
+                    <p>{{$page.Desc .}}</p>
                     {{if .Prompt}}
                     <div class="prompt-wrap">
                         <button type="button" class="prompt-btn" data-prompt="{{.Prompt}}" onclick="event.preventDefault(); event.stopPropagation(); togglePrompt(this.dataset.prompt)">
                             <span class="prompt-icon">✨</span> shelley prompt
                         </button>
-                        <div class="prompt-tooltip">{{.Prompt}}</div>
                     </div>
                     {{end}}
                 </div>
@@ -105,8 +134,13 @@
         </div>
 
         <footer>
+            {{if .DE}}
+            <p>~1-2 Stunden pro App · Methoden & Daten inklusive</p>
+            <p class="legal-links"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="#" onclick="event.preventDefault(); openContact();">Kontakt</a> · <a href="/llm.txt" title="LLM-readable site summary">llm.txt</a> · <a href="https://github.com/raffopenssh/kohlschwarz-think-tank" target="_blank" rel="noopener" title="Source on GitHub"><svg class="github-icon" viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></p>
+            {{else}}
             <p>~1-2 hours each · Methods & data included</p>
-            <p class="legal-links"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="#" onclick="event.preventDefault(); document.getElementById('contact-overlay').classList.add('active'); document.getElementById('contact-modal').classList.add('active');">Contact</a> · <a href="/llm.txt" title="LLM-readable site summary">llm.txt</a> · <a href="https://github.com/raffopenssh/kohlschwarz-think-tank" target="_blank" rel="noopener" title="Source on GitHub"><svg class="github-icon" viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></p>
+            <p class="legal-links"><a href="/en/impressum">Imprint</a> · <a href="/en/datenschutz">Privacy</a> · <a href="#" onclick="event.preventDefault(); openContact();">Contact</a> · <a href="/llm.txt" title="LLM-readable site summary">llm.txt</a> · <a href="https://github.com/raffopenssh/kohlschwarz-think-tank" target="_blank" rel="noopener" title="Source on GitHub"><svg class="github-icon" viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></p>
+            {{end}}
         </footer>
     </main>
 
@@ -115,8 +149,12 @@
     <div id="contact-overlay" onclick="closeContact()"></div>
     <div id="contact-modal">
         <span class="modal-close" onclick="closeContact()">✕</span>
-        <h3>Contact</h3>
+        <h3>{{if .DE}}Kontakt{{else}}Contact{{end}}</h3>
+        {{if .DE}}
+        <p>Wir sind nicht auf Discord, aber es gibt gute alte <a href="#" id="contact-email">E-Mail</a>.</p>
+        {{else}}
         <p>We're not on Discord, but there's old fashioned <a href="#" id="contact-email">email</a>.</p>
+        {{end}}
     </div>
     <div id="prompt-sheet">
         <span class="prompt-close" onclick="closePrompt()">✕</span>
@@ -137,6 +175,10 @@
     }
     function trackClick(id) {
         fetch('/api/click/' + id, {method: 'POST'}).catch(() => {});
+    }
+    function openContact() {
+        document.getElementById('contact-overlay').classList.add('active');
+        document.getElementById('contact-modal').classList.add('active');
     }
     function closeContact() {
         document.getElementById('contact-modal').classList.remove('active');

@@ -34,6 +34,11 @@
             </div>
 
             <div class="form-group">
+                <label for="description_de">Description (German)</label>
+                <textarea id="description_de" name="description_de" rows="2">{{if .App}}{{if .App.DescriptionDe}}{{.App.DescriptionDe}}{{end}}{{end}}</textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="prompt">Prompt (the key request to Shelley)</label>
                 <textarea id="prompt" name="prompt" rows="4">{{if .App}}{{if .App.Prompt}}{{.App.Prompt}}{{end}}{{end}}</textarea>
             </div>
@@ -46,6 +51,11 @@
             <div class="form-group">
                 <label for="sort_order">Sort Order</label>
                 <input type="number" id="sort_order" name="sort_order" value="{{if .App}}{{if .App.SortOrder}}{{.App.SortOrder}}{{end}}{{end}}">
+            </div>
+
+            <div class="form-group">
+                <label for="featured">Featured (pinned to top)</label>
+                <input type="checkbox" id="featured" name="featured" value="1" {{if .App}}{{if eq .App.Featured 1}}checked{{end}}{{end}}>
             </div>
 
             <div class="form-actions">

@@ -39,6 +39,27 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Language switch */
+.lang-switch {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--faint);
+    margin-bottom: 0.5rem;
+}
+
+.lang-switch a {
+    color: var(--faint);
+}
+
+.lang-switch a:hover {
+    color: var(--accent);
+}
+
+.lang-active {
+    color: var(--fg);
+    font-weight: 600;
+}
+
 /* Header */
 header {
     text-align: center;
@@ -76,15 +97,44 @@ header h1 {
 
 .card:hover {
     border-color: var(--muted);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
     text-decoration: none;
 }
 
+.card {
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.card.featured {
+    border-color: #c9a227;
+}
+
+.card.featured:hover {
+    border-color: #a8861a;
+}
+
 .thumb {
+    position: relative;
     height: 180px;
     background-size: cover;
     background-position: center;
     border-bottom: 1px solid var(--border);
+}
+
+.badge-new {
+    position: absolute;
+    top: 0.625rem;
+    left: 0.625rem;
+    background: #c9a227;
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
 }
 
 .content {
@@ -460,6 +510,9 @@ footer {
 }
 
 .legal-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
     margin-bottom: 2rem;
 }
 
