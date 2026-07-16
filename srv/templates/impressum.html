@@ -30,8 +30,8 @@
 
             <p><strong>Medieninhaber und Herausgeber:</strong></p>
             <p>
-                Raffael Hickisch<br>
-                Goldschlagstraße 23/18<br>
+                <span class="obf-name"></span><br>
+                <span class="obf-street"></span><br>
                 1150 Wien<br>
                 Österreich
             </p>
@@ -86,8 +86,8 @@
 
             <p><strong>Media owner and publisher:</strong></p>
             <p>
-                Raffael Hickisch<br>
-                Goldschlagstraße 23/18<br>
+                <span class="obf-name"></span><br>
+                <span class="obf-street"></span><br>
                 1150 Vienna<br>
                 Austria
             </p>
@@ -141,6 +141,9 @@
         a.href='mai'+'lto:'+e;
         a.textContent=e;
     });
+    var r=function(s){return s.replace(/[a-z]/gi,function(c){return String.fromCharCode((c<='Z'?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26);});};
+    document.querySelectorAll('.obf-name').forEach(function(n){n.textContent=r('Enssnry Uvpxvfpu');});
+    document.querySelectorAll('.obf-street').forEach(function(n){n.textContent=r('Tbyqfpuyntfgen')+String.fromCharCode(223)+r('r 23/18');});
 })();
 </script>
 </body>

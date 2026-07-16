@@ -493,7 +493,7 @@ Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-te
 	fmt.Fprint(w, `## Contact
 
 Use the contact link on https://kohlschwarz.at:8000/
-GitHub: https://github.com/raffopenssh/kohlschwarz-apps
+GitHub: https://github.com/raffopenssh
 `)
 }
 
