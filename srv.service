@@ -1,5 +1,5 @@
 [Unit]
-Description=Kohlschwarz Think-Tank Apps Showcase
+Description=Kohlschwarz Apps Showcase
 
 [Service]
 Type=simple

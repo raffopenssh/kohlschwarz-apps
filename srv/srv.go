@@ -374,11 +374,12 @@ func (s *Server) seedApps() error {
 		{
 			Url:           "https://austria-power.exe.xyz/",
 			Title:         "Netzkapazität Österreich",
-			Description:   "All 1,578 wind turbines with 6,631 MW capacity. Grid capacity, 441 substations, transmission lines, and feed-in potential for new wind projects.",
-			DescriptionDe: ptr("Alle 1.578 Windkraftanlagen mit 6.631 MW Leistung. Netzkapazitäten, 441 Umspannwerke, Hochspannungsleitungen und Einspeisepotenzial für neue Windprojekte."),
-			Thumbnail:     ptr("/static/thumbs/power.jpg"),
-			SortOrder:     ptr(int64(9)),
-			Prompt:        ptr("Map Austria's wind turbines and transformer stations. Use Austro Control obstacle data to get turbine heights. Analyze grid capacity for new wind installations by district, show where expansion is feasible."),
+			Description:   "Site analysis for PV, wind & battery at any address: yield, revenue, and grid feed-in capacity for expansion. Plus power market analytics from 3.5 years of ENTSO-E data.",
+			DescriptionDe: ptr("Standortanalyse für PV, Wind & Batterie an jeder Adresse: Ertrag, Erlös und Netzkapazität für Zubau. Dazu Strommarkt-Analytics aus 3,5 Jahren ENTSO-E-Daten."),
+			Thumbnail:     ptr("/static/thumbs/power.jpg?v=2"),
+			SortOrder:     ptr(int64(4)),
+			Featured:      1,
+			Prompt:        ptr("Map Austria's grid capacity for renewables: wind turbines from Austro Control obstacle data, substations and lines from OSM/APG. Add a site analysis tool — pick any address, choose rooftop PV, PV field, wind or battery, get expected yield, revenue and solar capture rate. Include power market analytics from ENTSO-E day-ahead prices showing negative price hours."),
 		},
 		{
 			Url:           "https://farm-subsidies-austria.exe.xyz/",
