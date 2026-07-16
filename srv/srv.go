@@ -546,7 +546,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		} else if r.URL.Path == "/sitemap.xml" || r.URL.Path == "/robots.txt" {
 			w.Header().Set("Cache-Control", "public, max-age=86400")
 		} else {
-			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.Header().Set("Cache-Control", "public, max-age=300")
 		}
 		next.ServeHTTP(w, r)
 	})
