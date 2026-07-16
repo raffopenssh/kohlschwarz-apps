@@ -309,12 +309,12 @@ func (s *Server) seedApps() error {
 		{
 			Url:           "https://five-megapixel-conservation.exe.xyz/",
 			Title:         "5MP.globe Conservation",
-			Description:   "Real-time fire detection, deforestation monitoring, and patrol tracking for 162 African keystone protected areas.",
-			DescriptionDe: ptr("Echtzeit-Feuererkennung, Entwaldungs-Monitoring und Patrouillen-Tracking für 162 afrikanische Schutzgebiete."),
+			Description:   "Real-time fire detection, deforestation monitoring, and conservation effort tracking for 162 African keystone protected areas.",
+			DescriptionDe: ptr("Echtzeit-Feuererkennung, Entwaldungs-Monitoring und Erfassung des Schutzaufwands für 162 afrikanische Schutzgebiete."),
 			Thumbnail:     ptr("/static/thumbs/five-megapixel.jpg"),
 			SortOrder:     ptr(int64(2)),
 			Featured:      1,
-			Prompt:        ptr("Build a conservation monitoring dashboard for African protected areas. Combine NASA FIRMS fire alerts, forest change data, and ranger patrol tracks on an interactive globe. Alert on new fires inside park boundaries."),
+			Prompt:        ptr("Build a conservation monitoring dashboard for African protected areas. Combine NASA FIRMS fire alerts, forest change data, and conservation effort tracks (GPX from rangers, vehicles, aircraft) on an interactive globe. Alert on new fires inside park boundaries."),
 		},
 		{
 			Url:           "https://groundwater-at.exe.xyz/",
@@ -473,10 +473,13 @@ func (s *Server) HandleLLMTxt(w http.ResponseWriter, r *http.Request) {
 	apps, _ := q.ListApps(r.Context())
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	fmt.Fprint(w, `# Kohlschwarz Think-Tank
+	fmt.Fprint(w, `# Kohlschwarz
 
-Civic data apps built for Austria. Open-source, methods and data included.
+Apps built from public data with Shelley on exe.dev – exploring what good
+can be done with it. Open-source, methods and data included.
 All apps are interactive, browser-based, and freely accessible.
+
+Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-terabytes-of-government-data-into-a-video-game
 
 ## Apps
 
@@ -489,7 +492,7 @@ All apps are interactive, browser-based, and freely accessible.
 	fmt.Fprint(w, `## Contact
 
 Email: raffaelhickisch+kohlschwarz@gmail.com
-GitHub: https://github.com/raffopenssh/kohlschwarz-think-tank
+GitHub: https://github.com/raffopenssh/kohlschwarz-apps
 `)
 }
 
