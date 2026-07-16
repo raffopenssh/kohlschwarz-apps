@@ -182,6 +182,7 @@ func (s *Server) HandleAdminSave(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	prompt := r.FormValue("prompt")
+	repoURL := r.FormValue("repo_url")
 
 	if id > 0 {
 		err := q.UpdateApp(ctx, dbgen.UpdateAppParams{
@@ -194,6 +195,7 @@ func (s *Server) HandleAdminSave(w http.ResponseWriter, r *http.Request) {
 			SortOrder:     &sortOrder,
 			Featured:      featured,
 			Prompt:        &prompt,
+			RepoUrl:       &repoURL,
 		})
 		if err != nil {
 			slog.Warn("update app", "error", err)
@@ -208,6 +210,7 @@ func (s *Server) HandleAdminSave(w http.ResponseWriter, r *http.Request) {
 			SortOrder:     &sortOrder,
 			Featured:      featured,
 			Prompt:        &prompt,
+			RepoUrl:       &repoURL,
 		})
 		if err != nil {
 			slog.Warn("create app", "error", err)
@@ -305,6 +308,7 @@ func (s *Server) seedApps() error {
 			SortOrder:     ptr(int64(1)),
 			Featured:      1,
 			Prompt:        ptr("Build a multiplayer browser game on real Austrian cadastral data. Players explore and claim parcels in their municipality, earn points for biodiversity, and win by putting 30% of the area under nature protection."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/siedler--sterreich"),
 		},
 		{
 			Url:           "https://five-megapixel-conservation.exe.xyz/",
@@ -315,6 +319,7 @@ func (s *Server) seedApps() error {
 			SortOrder:     ptr(int64(2)),
 			Featured:      1,
 			Prompt:        ptr("Build a conservation monitoring dashboard for African protected areas. Combine NASA FIRMS fire alerts, forest change data, and conservation effort tracks (GPX from rangers, vehicles, aircraft) on an interactive globe. Alert on new fires inside park boundaries."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/5mp"),
 		},
 		{
 			Url:           "https://groundwater-at.exe.xyz/",
@@ -325,6 +330,7 @@ func (s *Server) seedApps() error {
 			SortOrder:     ptr(int64(3)),
 			Featured:      1,
 			Prompt:        ptr("Build a drought risk map for Austria combining groundwater monitoring stations with hydropower plant locations. Show which municipalities face water stress based on declining groundwater trends and power generation dependency."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/austria-drought-map"),
 		},
 		{
 			Url:           "https://holzeinschlag-at.exe.xyz/",
@@ -334,6 +340,7 @@ func (s *Server) seedApps() error {
 			Thumbnail:     ptr("/static/thumbs/holzeinschlag.jpg"),
 			SortOrder:     ptr(int64(4)),
 			Prompt:        ptr("Map Austria's forest harvest by municipality using Hansen satellite data. Calculate timber volume from tree cover loss, add carbon emissions and ETS liability at current prices. Let users select years and combine municipalities."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/holzeinschlag-austria"),
 		},
 		{
 			Url:           "https://landcruiser-spares.exe.xyz:8001/",
@@ -343,6 +350,7 @@ func (s *Server) seedApps() error {
 			Thumbnail:     ptr("/static/thumbs/landcruiser.jpg"),
 			SortOrder:     ptr(int64(5)),
 			Prompt:        ptr("Build a 3D wireframe viewer for the Toyota Land Cruiser 100 series. Extract part diagrams from service manuals, create exploded views by system (engine, transmission, suspension), let users identify and search for parts."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/landcruiser-100-3d"),
 		},
 		{
 			Url:           "https://schools-at.exe.xyz/",
@@ -361,6 +369,7 @@ func (s *Server) seedApps() error {
 			Thumbnail:     ptr("/static/thumbs/maternity.jpg"),
 			SortOrder:     ptr(int64(7)),
 			Prompt:        ptr("Model maternity ward accessibility in Austria using real driving times. Weight by female population 15-44, show which areas exceed 30/45 min drive times. Let users simulate ward closures and see the impact."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/maternity-app"),
 		},
 		{
 			Url:           "https://child-care-access-at.exe.xyz/",
@@ -370,6 +379,7 @@ func (s *Server) seedApps() error {
 			Thumbnail:     ptr("/static/thumbs/childcare.jpg"),
 			SortOrder:     ptr(int64(8)),
 			Prompt:        ptr("Visualize childcare availability across Austrian municipalities. Show coverage rates, identify gaps where no infant care exists, compare facility quality indicators. Download data for analysis."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/childcare-austria"),
 		},
 		{
 			Url:           "https://austria-power.exe.xyz/",
@@ -380,6 +390,7 @@ func (s *Server) seedApps() error {
 			SortOrder:     ptr(int64(4)),
 			Featured:      1,
 			Prompt:        ptr("Map Austria's grid capacity for renewables: wind turbines from Austro Control obstacle data, substations and lines from OSM/APG. Add a site analysis tool — pick any address, choose rooftop PV, PV field, wind or battery, get expected yield, revenue and solar capture rate. Include power market analytics from ENTSO-E day-ahead prices showing negative price hours."),
+			RepoUrl:       ptr("https://github.com/raffopenssh/austria-grid"),
 		},
 		{
 			Url:           "https://farm-subsidies-austria.exe.xyz/",
@@ -488,6 +499,9 @@ Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-te
 	for _, app := range apps {
 		fmt.Fprintf(w, "### %s\n", app.Title)
 		fmt.Fprintf(w, "URL: %s\n", app.Url)
+		if app.RepoUrl != nil && *app.RepoUrl != "" {
+			fmt.Fprintf(w, "Source: %s\n", *app.RepoUrl)
+		}
 		fmt.Fprintf(w, "%s\n\n", app.Description)
 	}
 	fmt.Fprint(w, `## Contact

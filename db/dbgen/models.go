@@ -22,6 +22,7 @@ type App struct {
 	ClickCount     *int64    `json:"click_count"`
 	Featured       int64     `json:"featured"`
 	DescriptionDe  *string   `json:"description_de"`
+	RepoUrl        *string   `json:"repo_url"`
 }
 
 type Migration struct {

@@ -172,7 +172,26 @@ header h1 {
 /* Prompt tooltip */
 .prompt-wrap {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.repo-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--faint);
+    opacity: 0.55;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.repo-link:hover {
+    opacity: 1;
+    color: var(--fg);
 }
 
 .prompt-btn {

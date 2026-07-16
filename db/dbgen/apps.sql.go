@@ -10,9 +10,9 @@ import (
 )
 
 const createApp = `-- name: CreateApp :one
-INSERT INTO apps (url, title, description, description_de, shelley_command, thumbnail, sort_order, featured, prompt, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de
+INSERT INTO apps (url, title, description, description_de, shelley_command, thumbnail, sort_order, featured, prompt, repo_url, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+RETURNING id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de, repo_url
 `
 
 type CreateAppParams struct {
@@ -25,6 +25,7 @@ type CreateAppParams struct {
 	SortOrder      *int64  `json:"sort_order"`
 	Featured       int64   `json:"featured"`
 	Prompt         *string `json:"prompt"`
+	RepoUrl        *string `json:"repo_url"`
 }
 
 func (q *Queries) CreateApp(ctx context.Context, arg CreateAppParams) (App, error) {
@@ -38,6 +39,7 @@ func (q *Queries) CreateApp(ctx context.Context, arg CreateAppParams) (App, erro
 		arg.SortOrder,
 		arg.Featured,
 		arg.Prompt,
+		arg.RepoUrl,
 	)
 	var i App
 	err := row.Scan(
@@ -54,6 +56,7 @@ func (q *Queries) CreateApp(ctx context.Context, arg CreateAppParams) (App, erro
 		&i.ClickCount,
 		&i.Featured,
 		&i.DescriptionDe,
+		&i.RepoUrl,
 	)
 	return i, err
 }
@@ -68,7 +71,7 @@ func (q *Queries) DeleteApp(ctx context.Context, id int64) error {
 }
 
 const getApp = `-- name: GetApp :one
-SELECT id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de FROM apps WHERE id = ?
+SELECT id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de, repo_url FROM apps WHERE id = ?
 `
 
 func (q *Queries) GetApp(ctx context.Context, id int64) (App, error) {
@@ -88,6 +91,7 @@ func (q *Queries) GetApp(ctx context.Context, id int64) (App, error) {
 		&i.ClickCount,
 		&i.Featured,
 		&i.DescriptionDe,
+		&i.RepoUrl,
 	)
 	return i, err
 }
@@ -102,7 +106,7 @@ func (q *Queries) IncrementClickCount(ctx context.Context, id int64) error {
 }
 
 const listApps = `-- name: ListApps :many
-SELECT id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de FROM apps ORDER BY featured DESC, CASE WHEN featured = 1 THEN sort_order END ASC, click_count DESC, sort_order ASC, id ASC
+SELECT id, url, title, description, shelley_command, thumbnail, sort_order, created_at, updated_at, prompt, click_count, featured, description_de, repo_url FROM apps ORDER BY featured DESC, CASE WHEN featured = 1 THEN sort_order END ASC, click_count DESC, sort_order ASC, id ASC
 `
 
 func (q *Queries) ListApps(ctx context.Context) ([]App, error) {
@@ -128,6 +132,7 @@ func (q *Queries) ListApps(ctx context.Context) ([]App, error) {
 			&i.ClickCount,
 			&i.Featured,
 			&i.DescriptionDe,
+			&i.RepoUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -153,6 +158,7 @@ UPDATE apps SET
     sort_order = ?,
     featured = ?,
     prompt = ?,
+    repo_url = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
@@ -167,6 +173,7 @@ type UpdateAppParams struct {
 	SortOrder      *int64  `json:"sort_order"`
 	Featured       int64   `json:"featured"`
 	Prompt         *string `json:"prompt"`
+	RepoUrl        *string `json:"repo_url"`
 	ID             int64   `json:"id"`
 }
 
@@ -181,6 +188,7 @@ func (q *Queries) UpdateApp(ctx context.Context, arg UpdateAppParams) error {
 		arg.SortOrder,
 		arg.Featured,
 		arg.Prompt,
+		arg.RepoUrl,
 		arg.ID,
 	)
 	return err

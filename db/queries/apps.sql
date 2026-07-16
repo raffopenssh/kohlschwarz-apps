@@ -5,8 +5,8 @@ SELECT * FROM apps ORDER BY featured DESC, CASE WHEN featured = 1 THEN sort_orde
 SELECT * FROM apps WHERE id = ?;
 
 -- name: CreateApp :one
-INSERT INTO apps (url, title, description, description_de, shelley_command, thumbnail, sort_order, featured, prompt, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+INSERT INTO apps (url, title, description, description_de, shelley_command, thumbnail, sort_order, featured, prompt, repo_url, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: UpdateApp :exec
@@ -20,6 +20,7 @@ UPDATE apps SET
     sort_order = ?,
     featured = ?,
     prompt = ?,
+    repo_url = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
