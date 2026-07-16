@@ -491,7 +491,7 @@ Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-te
 	}
 	fmt.Fprint(w, `## Contact
 
-Email: raffaelhickisch+kohlschwarz@gmail.com
+Use the contact link on https://kohlschwarz.at:8000/
 GitHub: https://github.com/raffopenssh/kohlschwarz-apps
 `)
 }
