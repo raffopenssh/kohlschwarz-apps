@@ -92,10 +92,15 @@
             <p>
                 <strong>Ausnahme: refugeestatus.eu</strong> – In dieser Anwendung können
                 Nutzer:innen freiwillig eigene Falldaten eintragen (Zeitstempel, Status,
-                Einrichtung, optional GPS-Position, Notizen und Dokumentfotos). Es werden
-                keine Klarnamen erhoben, die Daten hängen jedoch an einer pseudonymen ID und
-                sind daher personenbezogen; Dokumente können besondere Kategorien nach
-                Art. 9 DSGVO enthalten. Rechtsgrundlage ist die Einwilligung
+                Einrichtungsname, optional Notizen, Termine und Dokumentfotos). Es werden
+                keine Klarnamen erhoben und keine Standortkoordinaten gespeichert –
+                die Einrichtung wird auf dem Gerät ermittelt, nur ihr Name übertragen,
+                und GPS-Metadaten werden aus Fotos vor dem Upload entfernt. Die Daten
+                hängen jedoch an einer pseudonymen ID und sind daher personenbezogen;
+                sämtliche Nutzerinhalte werden dort vorsorglich als besondere Kategorien
+                nach Art. 9 DSGVO behandelt und fallbezogen verschlüsselt gespeichert
+                (AES-256-GCM); die Löschung erfolgt durch Vernichtung des Fallschlüssels.
+                Rechtsgrundlage ist die ausdrückliche Einwilligung je Aktion
                 (Art. 6 Abs. 1 lit. a bzw. Art. 9 Abs. 2 lit. a DSGVO). Es gilt die eigene
                 <a href="https://refugeestatus.exe.xyz/#/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung von refugeestatus.eu</a>.
             </p>
@@ -230,11 +235,16 @@
             </p>
             <p>
                 <strong>Exception: refugeestatus.eu</strong> – In this application users may
-                voluntarily enter their own case data (timestamps, status, facility, optionally
-                GPS position, notes and document photos). No real names are collected, but the
-                data is tied to a pseudonymous ID and is therefore personal data; documents may
-                contain special categories under Art. 9 GDPR. The legal basis is consent
-                (Art. 6(1)(a) and Art. 9(2)(a) GDPR). Its own
+                voluntarily enter their own case data (timestamps, status, facility name,
+                optionally notes, appointments and document photos). No real names are
+                collected and no location coordinates are stored – the facility is determined
+                on the device and only its name is transmitted, and GPS metadata is stripped
+                from photos before upload. The data is nevertheless tied to a pseudonymous ID
+                and is therefore personal data; all user-entered content is precautionarily
+                treated there as special categories under Art. 9 GDPR and stored encrypted
+                per case (AES-256-GCM); deletion works by destroying the case key. The legal
+                basis is explicit per-action consent (Art. 6(1)(a) and Art. 9(2)(a) GDPR).
+                Its own
                 <a href="https://refugeestatus.exe.xyz/#/datenschutz" target="_blank" rel="noopener">privacy policy</a>
                 applies.
             </p>
