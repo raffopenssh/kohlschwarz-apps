@@ -655,10 +655,12 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /admin/jobs/email", s.HandleAdminJobsEmail)
 	mux.HandleFunc("POST /admin/jobs/hide/{id}", s.HandleAdminJobsHide)
 	mux.HandleFunc("POST /admin/jobs/vote/{id}", s.HandleAdminJobsVote)
+	mux.HandleFunc("POST /admin/jobs/pin/{id}", s.HandleAdminJobsPin)
 	mux.HandleFunc("POST /admin/jobs/note/{id}", s.HandleAdminJobsNote)
 	mux.HandleFunc("GET /admin/funding", s.HandleAdminFunding)
 	mux.HandleFunc("POST /admin/funding/status/{id}", s.HandleAdminFundingStatus)
 	mux.HandleFunc("POST /admin/funding/vote/{id}", s.HandleAdminFundingVote)
+	mux.HandleFunc("POST /admin/funding/pin/{id}", s.HandleAdminFundingPin)
 	mux.HandleFunc("POST /admin/funding/note/{id}", s.HandleAdminFundingNote)
 	mux.HandleFunc("POST /admin/funding/reseed", s.HandleAdminFundingReseed)
 	if _, err := funding.Seed(context.Background(), s.DB); err != nil {

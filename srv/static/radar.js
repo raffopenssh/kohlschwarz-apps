@@ -21,6 +21,7 @@
       case 'hard':return d.verdict==='hard to fill';
       case 'live':return d.verdict!=='closed'&&d.verdict!=='gone';
       case 'up':return d.vote==='1';
+      case 'pinned':return d.pinned==='1';
       case 'open':return d.status==='open';
       case 'soon':return d.soon==='1'&&d.status!=='skip'&&d.status!=='rejected';
       case 'ssa':case 'at':case 'eu':return (d.region||d.track)===f;
@@ -84,18 +85,37 @@
     function flash(msg,err){saved.textContent=msg;saved.classList.toggle('err',!!err);saved.classList.add('show');clearTimeout(t);t=setTimeout(function(){saved.classList.remove('show');},err?4000:1500);}
     // thumbs
     var vb=[].slice.call(R.querySelectorAll('.vote .ib'));
+    function pop(b){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');}
     function paintVote(v){vb.forEach(function(b){var on=+b.value===v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
       card.dataset.vote=v;card.classList.toggle('voted-up',v===1);card.classList.toggle('voted-down',v===-1);}
     vb.forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();
-      var v=+b.value,cur=+card.dataset.vote||0,nv=v===cur?0:v;paintVote(nv);
-      post(base+'vote/'+id,{vote:v}).then(function(j){paintVote(j.vote);flash(j.vote?'saved':'cleared');}).catch(function(){paintVote(cur);flash('failed',1);});
+      var v=+b.value,cur=+card.dataset.vote||0,nv=v===cur?0:v;paintVote(nv);if(nv)pop(b);
+      post(base+'vote/'+id,{vote:v}).then(function(j){paintVote(j.vote);flash(j.vote?(j.vote>0?'more like this':'fewer like this'):'cleared');}).catch(function(){paintVote(cur);flash('failed',1);});
     });});
+    // pin / star → moves the card to the top of the list
+    var pb=R.querySelector('.pin .ib');if(pb){
+      function paintPin(p){pb.classList.toggle('on',p);pb.setAttribute('aria-pressed',p);pb.dataset.tip=p?'Unpin':'Pin to top';card.dataset.pinned=p?'1':'';card.classList.toggle('pinned',p);}
+      function place(p){var list=card.parentNode,cards=[].slice.call(list.querySelectorAll('.card'));
+        var target=null;
+        if(p){target=cards.find(function(c){return c!==card&&c.dataset.pinned!=='1';})||null;} // first unpinned card
+        else{var lastPinned=null;cards.forEach(function(c){if(c!==card&&c.dataset.pinned==='1')lastPinned=c;});
+          // back to score order among unpinned cards
+          var sc=+card.dataset.score||-1;target=cards.find(function(c){return c!==card&&c.dataset.pinned!=='1'&&(+c.dataset.score||-1)<sc;})||null;
+          if(lastPinned&&target&&lastPinned.compareDocumentPosition(target)&Node.PRECEDING_ORDER)target=lastPinned.nextElementSibling;}
+        if(target===card.nextElementSibling||(target===null&&!card.nextElementSibling))return;
+        var r0=card.getBoundingClientRect();card.classList.add('moving');
+        setTimeout(function(){list.insertBefore(card,target);card.classList.remove('moving');
+          if(p){var r1=card.getBoundingClientRect();if(r1.top<0||r1.bottom>innerHeight)card.scrollIntoView({block:'center',behavior:'smooth'});}
+          else{window.scrollBy(0,card.getBoundingClientRect().top-r0.top);}},250);}
+      pb.addEventListener('click',function(e){e.preventDefault();var cur=card.dataset.pinned==='1',nv=!cur;paintPin(nv);if(nv)pop(pb);
+        post(base+'pin/'+id,{pinned:nv?'1':'0'}).then(function(j){paintPin(j.pinned);flash(j.pinned?'pinned to top':'unpinned');place(j.pinned);}).catch(function(){paintPin(cur);flash('failed',1);});});
+    }
     // note
     var tog=R.querySelector('.note-tog'),nf=R.querySelector('.note-form'),ta=nf.querySelector('textarea'),last=ta.value,saveT;
     function openNote(o){nf.hidden=!o;tog.setAttribute('aria-expanded',o);if(o){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);grow();}}
     function grow(){if(!('fieldSizing' in ta.style)){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight+2,14*16)+'px';}}
     function saveNote(){var v=ta.value.trim();if(v===last){nf.classList.remove('dirty');return Promise.resolve();}
-      return post(base+'note/'+id,{note:v}).then(function(j){last=j.note;nf.classList.remove('dirty');tog.classList.toggle('has',!!last);tog.title=last?'Edit note':'Add a note';flash('note saved');}).catch(function(){flash('not saved',1);});}
+      return post(base+'note/'+id,{note:v}).then(function(j){last=j.note;nf.classList.remove('dirty');tog.classList.toggle('has',!!last);tog.dataset.tip=last?'Edit note':'Add note';flash('note saved');}).catch(function(){flash('not saved',1);});}
     tog.addEventListener('click',function(){openNote(nf.hidden);});
     ta.addEventListener('input',function(){grow();nf.classList.toggle('dirty',ta.value.trim()!==last);clearTimeout(saveT);saveT=setTimeout(saveNote,1200);});
     ta.addEventListener('blur',function(){clearTimeout(saveT);saveNote();});
@@ -120,8 +140,8 @@
       post(base+'hide/'+id,un?{unhide:'1'}:{}).then(function(j){
         card.classList.remove('leaving');card.classList.toggle('hidden-row',j.hidden);card.dataset.hidden=j.hidden?'1':'';
         var showingHidden=/[?&]hidden=1/.test(location.search);
-        tf.innerHTML=j.hidden?'<input type="hidden" name="unhide" value="1"><button class="ib txt" title="Put this posting back on the list"><svg class="i"><use href="#i-undo"/></svg><span class="lbl">restore</span></button>'
-          :'<button class="ib txt" title="Remove from the list (not relevant)."><svg class="i"><use href="#i-trash"/></svg><span class="lbl">not relevant</span></button>';
+        tf.innerHTML=j.hidden?'<input type="hidden" name="unhide" value="1"><button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>'
+          :'<button class="ib" data-tip="Not relevant" aria-label="not relevant"><svg class="i"><use href="#i-trash"/></svg></button>';
         if(j.hidden&&j.ask_reason)askWhy();else why.hidden=true;
         if(j.hidden&&!showingHidden&&!j.ask_reason){setTimeout(function(){card.hidden=true;filterCount();},250);}
         else if(j.hidden&&!showingHidden){why.querySelector('.skip').addEventListener('click',function(){card.hidden=true;filterCount();},{once:true});

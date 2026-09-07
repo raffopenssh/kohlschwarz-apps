@@ -194,39 +194,54 @@ details.runs>summary h2{display:inline;margin:0}
 .run .log{grid-column:1/-1}.run .log summary{cursor:pointer;color:var(--muted);font-size:.8rem}
 .run pre{font-size:.75rem;white-space:pre-wrap;margin:.3rem 0 0;max-height:14rem;overflow:auto}
 
-/* ---- owner feedback row: thumbs · note · status · trash ---- */
-.react{margin-top:.45rem}
-.react-row{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap}
+/* ---- owner feedback bar: star · thumbs · note · (status) · trash ---- */
+.react{margin-top:.4rem}
+.react-row{display:flex;align-items:center;gap:2px;min-height:34px}
 .react form{display:contents}
-.react .vote{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--bg)}
-.react .ib{background:transparent;border:0;border-radius:8px;color:var(--faint);padding:0 .55em;min-height:34px;min-width:34px;justify-content:center;gap:.3em;font-size:.8rem;transition:color .15s,background .15s,transform .1s}
-.react .vote .ib{border-radius:0;min-width:40px}
-.react .vote .ib+.ib{border-left:1px solid var(--line)}
-@media (hover:hover){.react .ib:hover{color:var(--fg);background:var(--chip)}}
-.react .ib:active{transform:scale(.92)}
-.react .ib:focus-visible{outline:2px solid var(--s70);outline-offset:-2px}
-.react .ib.on{color:#fff}
-.react .vote .ib[value="1"].on{background:var(--s90)}
-.react .vote .ib[value="-1"].on{background:var(--soon-fg)}
-.react .ib.on svg.i{fill:currentColor;fill-opacity:.25}
+.react .grow{flex:1}
+.react .sep{width:1px;height:14px;background:var(--line);margin:0 .3rem}
+.react .ib{position:relative;background:transparent;border:0;border-radius:8px;color:var(--faint);padding:0;width:32px;height:32px;min-height:0;justify-content:center;
+  transition:color .15s,background .15s,transform .12s cubic-bezier(.34,1.56,.64,1)}
+.react .ib svg.i{width:18px;height:18px;vertical-align:0;stroke-width:1.9;transition:fill .15s,transform .15s}
+@media (hover:hover){.react .ib:hover{color:var(--fg);background:var(--chip)}
+  .react .ib.up:hover{color:var(--s90)}.react .ib.down:hover{color:var(--soon-fg)}.react .ib.star:hover{color:var(--s40)}.react .trash .ib:hover{color:var(--soon-fg)}}
+.react .ib:active{transform:scale(.88)}
+.react .ib:focus-visible{outline:2px solid var(--link);outline-offset:1px}
+.react .ib.on svg.i{fill:currentColor}
+.react .ib.up.on{color:var(--s90)}
+.react .ib.down.on{color:var(--soon-fg)}
+.react .ib.star.on{color:var(--s40)}
+.react .ib.pop svg.i{animation:pop .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.react .ib.up.pop svg.i{animation-name:popup}
+@keyframes popup{0%{transform:scale(1)}40%{transform:scale(1.35) rotate(-12deg)}100%{transform:scale(1)}}
+.react .ib.down.pop svg.i{animation-name:popdown}
+@keyframes popdown{0%{transform:scale(1)}40%{transform:scale(1.35) rotate(12deg)}100%{transform:scale(1)}}
 .react .note-tog.has{color:var(--link)}
+.react .note-tog.has svg.i{fill:currentColor;fill-opacity:.2}
 .react .note-tog[aria-expanded=true]{color:var(--fg);background:var(--chip)}
-.react .trash{margin-left:auto}
-.react .stat select{font:inherit;font-size:.8rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:.3em 1.6em .3em .7em;min-height:34px;appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c959f' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .45em center;background-size:.9em}
-.react .stat select:focus-visible{outline:2px solid var(--s70);outline-offset:1px}
-.react .saved{font-size:.75rem;color:var(--s90);opacity:0;transition:opacity .25s;min-width:0}
-.react .saved.show{opacity:1}
+/* tooltips (desktop hover only) */
+@media (hover:hover) and (pointer:fine){
+  .react .ib[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translate(-50%,3px);white-space:nowrap;
+    font-size:.72rem;line-height:1;padding:.4em .6em;border-radius:6px;background:var(--fg);color:var(--bg);opacity:0;pointer-events:none;transition:opacity .12s,transform .12s;z-index:3}
+  .react .ib[data-tip]:hover::after{opacity:1;transform:translate(-50%,0);transition-delay:.35s}
+}
+.react .stat select{font:inherit;font-size:.78rem;color:var(--muted);background:transparent;border:1px solid transparent;border-radius:8px;padding:.3em 1.5em .3em .6em;height:32px;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c959f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .4em center;background-size:.9em;cursor:pointer;transition:background-color .15s,color .15s}
+@media (hover:hover){.react .stat select:hover{background-color:var(--chip);color:var(--fg)}}
+.react .stat select:focus-visible{outline:2px solid var(--link);outline-offset:1px}
+.react .saved{font-size:.72rem;color:var(--muted);opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;margin-left:.3rem;white-space:nowrap}
+.react .saved.show{opacity:1;transform:none}
 .react .saved.err{color:var(--soon-fg)}
 .js .react .nojs{display:none}
-/* note */
-.react .note-form{display:flex;gap:.4rem;align-items:flex-start;margin-top:.35rem;animation:in .2s ease both}
+
+.react .note-form{display:flex;gap:.4rem;align-items:flex-start;margin-top:.3rem;animation:in .2s ease both}
 .react .note-form[hidden]{display:none}
 .react textarea{flex:1;min-width:0;font:inherit;font-size:.88rem;line-height:1.45;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.5em .7em;resize:none;min-height:38px;max-height:14em;overflow:auto;field-sizing:content;transition:border-color .15s,box-shadow .15s}
 .react textarea:focus{outline:0;border-color:var(--link);box-shadow:0 0 0 3px color-mix(in srgb,var(--link) 18%,transparent)}
 .react textarea::placeholder{color:var(--faint)}
 .react .note-form.dirty textarea{border-color:var(--s40)}
-/* one-time "why?" prompt after trashing */
+
 .react .why-ask{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;margin-top:.4rem;padding:.5rem .6rem;border-radius:10px;background:var(--soon);color:var(--soon-fg);font-size:.82rem;animation:in .2s ease both}
 .react .why-ask[hidden]{display:none}
 .react .why-ask .q{font-weight:600}.react .why-ask .q small{font-weight:400;opacity:.8}
@@ -234,17 +249,25 @@ details.runs>summary h2{display:inline;margin:0}
 .react .why-ask .chips button{font-size:.78rem;border-radius:999px;padding:.25em .7em;min-height:30px;background:var(--bg);border-color:color-mix(in srgb,var(--soon-fg) 35%,transparent);color:var(--fg)}
 .react .why-ask .chips button:hover,.react .why-ask .chips button.on{background:var(--soon-fg);color:#fff;border-color:var(--soon-fg)}
 .react .why-ask .skip{margin-left:auto;background:transparent;border:0;color:var(--soon-fg);font-size:.78rem;min-height:30px;padding:.2em .5em;text-decoration:underline;text-underline-offset:2px}
-.card.leaving{opacity:.35;transition:opacity .3s}
+
 .card.hidden-row .react .trash .ib{color:var(--s70)}
 .card.voted-up{box-shadow:inset 3px 0 0 var(--s90)}
 .card.voted-down{box-shadow:inset 3px 0 0 var(--soon-fg)}
+.card.pinned{background:color-mix(in srgb,var(--s40) 6%,var(--card))}
+.card.pinned .title::before{content:"";display:inline-block;width:.75em;height:.75em;margin-right:.3em;vertical-align:-.05em;background:var(--s40);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z'/%3E%3C/svg%3E") center/contain no-repeat}
+.card.moving{transition:opacity .25s,transform .25s;opacity:0;transform:translateY(-8px)}
 @media (max-width:640px){
-  .react .ib{min-height:40px;min-width:40px}
-  .react .vote .ib{min-width:46px}
-  .react .stat select{min-height:40px}
-  .react .trash .lbl,.react .note-tog .lbl{display:none}
+  .react-row{gap:.15rem;min-height:44px}
+  .react .ib{width:44px;height:44px;border-radius:10px}
+  .react .ib svg.i{width:21px;height:21px}
+  .react .sep{margin:0 .1rem}
+  .react .stat select{height:40px;font-size:.85rem}
+  .react .saved{display:none}
   .react .why-ask .skip{flex:1 1 100%;margin:0;text-align:right}
 }
+@media (prefers-reduced-motion:reduce){.react .ib.pop svg.i{animation:none}.card.moving{transition:none}}
 /* feedback summary panel */
 details.fb{margin:.4rem 0 0}
 details.fb>summary{display:flex;align-items:center;gap:.5em}

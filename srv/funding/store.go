@@ -31,6 +31,7 @@ type Entry struct {
 	UserNote     string
 	Vote         int    // owner thumbs: 1 up, -1 down, 0 none
 	TrashReason  string // why skipped/rejected ('' = not given)
+	Pinned       bool   // owner-starred: always listed first
 }
 
 // DaysLeft returns days until deadline, or -1 when unknown.
@@ -60,15 +61,17 @@ func (e Entry) DL() string {
 	return "—"
 }
 
-const cols = `id, key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason`
+const cols = `id, key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason, pinned`
 
 func scan(rows *sql.Rows) ([]Entry, error) {
 	var out []Entry
 	for rows.Next() {
 		var e Entry
-		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason); err != nil {
+		var pinned int64
+		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason, &pinned); err != nil {
 			return nil, err
 		}
+		e.Pinned = pinned == 1
 		out = append(out, e)
 	}
 	return out, rows.Err()
@@ -76,7 +79,7 @@ func scan(rows *sql.Rows) ([]Entry, error) {
 
 // List returns all entries, best score first; expired deadlines sink to the bottom.
 func List(ctx context.Context, db *sql.DB) ([]Entry, error) {
-	rows, err := db.QueryContext(ctx, `SELECT `+cols+` FROM funding ORDER BY
+	rows, err := db.QueryContext(ctx, `SELECT `+cols+` FROM funding ORDER BY pinned DESC,
 		CASE WHEN status IN ('skip','rejected','won') THEN 1 ELSE 0 END,
 		CASE WHEN deadline <> '' AND deadline < date('now') THEN 1 ELSE 0 END,
 		score DESC, deadline`)
@@ -143,6 +146,12 @@ func SetNote(ctx context.Context, db *sql.DB, id int64, note string) error {
 }
 
 // SetVote stores the owner's thumbs (1, -1 or 0).
+// SetPinned stars/unstars an entry.
+func SetPinned(ctx context.Context, db *sql.DB, id int64, pinned bool) error {
+	_, err := db.ExecContext(ctx, `UPDATE funding SET pinned=?, updated_at=datetime('now') WHERE id=?`, pinned, id)
+	return err
+}
+
 func SetVote(ctx context.Context, db *sql.DB, id int64, vote int) error {
 	if vote < -1 || vote > 1 {
 		vote = 0

@@ -99,6 +99,7 @@ func merge(dst *Row, src Row) {
 		dst.Salary = src.Salary
 	}
 	dst.Reposted = dst.Reposted || src.Reposted
+	dst.Pinned = dst.Pinned || src.Pinned
 	dst.Events = append(dst.Events, src.Events...)
 	if src.LastSeen > dst.LastSeen {
 		dst.LastSeen = src.LastSeen

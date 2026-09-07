@@ -40,6 +40,7 @@ type Row struct {
 	Vote            int     // owner thumbs: 1 up, -1 down, 0 none
 	UserNote        string  // owner's free-text note
 	TrashReason     string  // why it was hidden ('' = not given)
+	Pinned          bool    // owner-starred: always listed first
 	Events          []Event // change history (loaded by AttachEvents)
 	latestFirstSeen string  // newest first_seen among merged copies (Dedupe)
 	Dupes           int     // extra copies collapsed by Dedupe (not stored)
@@ -109,18 +110,19 @@ func (r Row) IsNew() bool {
 	return err == nil && time.Since(t) < 8*24*time.Hour
 }
 
-const rowCols = `id, url, source, title, org, location, snippet, lang, region, kind, posted, deadline, first_seen, last_seen, score, why, brief, reported_at, hidden, salary, applicants, checked_at, closed_at, reposted, vote, user_note, trash_reason`
+const rowCols = `id, url, source, title, org, location, snippet, lang, region, kind, posted, deadline, first_seen, last_seen, score, why, brief, reported_at, hidden, salary, applicants, checked_at, closed_at, reposted, vote, user_note, trash_reason, pinned`
 
 func scanRows(rows *sql.Rows) ([]Row, error) {
 	defer rows.Close()
 	var out []Row
 	for rows.Next() {
 		var r Row
-		var hidden, reposted int64
-		if err := rows.Scan(&r.ID, &r.URL, &r.Source, &r.Title, &r.Org, &r.Location, &r.Snippet, &r.Lang, &r.Region, &r.Kind, &r.Posted, &r.Deadline, &r.FirstSeen, &r.LastSeen, &r.Score, &r.Why, &r.Brief, &r.ReportedAt, &hidden, &r.Salary, &r.Applicants, &r.CheckedAt, &r.ClosedAt, &reposted, &r.Vote, &r.UserNote, &r.TrashReason); err != nil {
+		var hidden, reposted, pinned int64
+		if err := rows.Scan(&r.ID, &r.URL, &r.Source, &r.Title, &r.Org, &r.Location, &r.Snippet, &r.Lang, &r.Region, &r.Kind, &r.Posted, &r.Deadline, &r.FirstSeen, &r.LastSeen, &r.Score, &r.Why, &r.Brief, &r.ReportedAt, &hidden, &r.Salary, &r.Applicants, &r.CheckedAt, &r.ClosedAt, &reposted, &r.Vote, &r.UserNote, &r.TrashReason, &pinned); err != nil {
 			return nil, err
 		}
 		r.Hidden = hidden == 1
+		r.Pinned = pinned == 1
 		r.Reposted = reposted == 1
 		out = append(out, r)
 	}
@@ -223,7 +225,7 @@ func AttachEvents(ctx context.Context, db *sql.DB, rows []Row) {
 // List returns postings ordered by score, newest first; unranked at the end.
 func List(ctx context.Context, db *sql.DB, includeHidden bool, limit int) ([]Row, error) {
 	q := `SELECT ` + rowCols + ` FROM job_postings WHERE (? OR hidden = 0)
-		ORDER BY score IS NULL, score DESC, first_seen DESC LIMIT ?`
+		ORDER BY pinned DESC, score IS NULL, score DESC, first_seen DESC LIMIT ?`
 	rows, err := db.QueryContext(ctx, q, includeHidden, limit)
 	if err != nil {
 		return nil, err
@@ -265,6 +267,12 @@ func SetHidden(ctx context.Context, db *sql.DB, id int64, hidden bool, reason st
 }
 
 // SetVote stores the owner's thumbs (1, -1 or 0).
+// SetPinned stars/unstars a posting.
+func SetPinned(ctx context.Context, db *sql.DB, id int64, pinned bool) error {
+	_, err := db.ExecContext(ctx, `UPDATE job_postings SET pinned = ? WHERE id = ?`, pinned, id)
+	return err
+}
+
 func SetVote(ctx context.Context, db *sql.DB, id int64, vote int) error {
 	if vote < -1 || vote > 1 {
 		vote = 0

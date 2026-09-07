@@ -113,6 +113,31 @@ func (s *Server) HandleAdminJobsVote(w http.ResponseWriter, r *http.Request) {
 	s.feedbackDone(w, r, "/admin/jobs", map[string]any{"vote": v})
 }
 
+// HandleAdminJobsPin toggles the star; pinned postings are listed first.
+func (s *Server) HandleAdminJobsPin(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAuth(w, r) {
+		return
+	}
+	ctx := r.Context()
+	id := pathID(r)
+	row, _ := jobs.Get(ctx, s.DB, id)
+	if row == nil {
+		http.NotFound(w, r)
+		return
+	}
+	pin := !row.Pinned
+	if v := r.FormValue("pinned"); v != "" { // explicit state wins over toggle
+		pin = v == "1"
+	}
+	jobs.SetPinned(ctx, s.DB, id, pin)
+	action := "unpin"
+	if pin {
+		action = "pin"
+	}
+	feedback.Log(ctx, s.DB, "job", id, action, "", "", row.Title, row.Org)
+	s.feedbackDone(w, r, "/admin/jobs", map[string]any{"pinned": pin})
+}
+
 func (s *Server) HandleAdminJobsNote(w http.ResponseWriter, r *http.Request) {
 	if !s.requireAuth(w, r) {
 		return
@@ -199,6 +224,30 @@ func (s *Server) HandleAdminFundingVote(w http.ResponseWriter, r *http.Request) 
 	funding.SetVote(ctx, s.DB, id, v)
 	feedback.Log(ctx, s.DB, "grant", id, voteAction(v), "", "", e.Name, e.Track)
 	s.feedbackDone(w, r, "/admin/funding#f"+strconv.FormatInt(id, 10), map[string]any{"vote": v})
+}
+
+func (s *Server) HandleAdminFundingPin(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAuth(w, r) {
+		return
+	}
+	ctx := r.Context()
+	id := pathID(r)
+	e, _ := funding.Get(ctx, s.DB, id)
+	if e == nil {
+		http.NotFound(w, r)
+		return
+	}
+	pin := !e.Pinned
+	if v := r.FormValue("pinned"); v != "" {
+		pin = v == "1"
+	}
+	funding.SetPinned(ctx, s.DB, id, pin)
+	action := "unpin"
+	if pin {
+		action = "pin"
+	}
+	feedback.Log(ctx, s.DB, "grant", id, action, "", "", e.Name, e.Track)
+	s.feedbackDone(w, r, "/admin/funding#f"+strconv.FormatInt(id, 10), map[string]any{"pinned": pin})
 }
 
 func (s *Server) HandleAdminFundingNote(w http.ResponseWriter, r *http.Request) {
