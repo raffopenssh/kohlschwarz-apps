@@ -27,10 +27,11 @@ Timeline: call status per page (open / closed / rolling / next round), concrete 
 Next: the single most useful concrete action for him this month, <=20 words
 If the page text is missing or unreadable, set What to 'Page not readable; from record:' and keep other lines short.`
 
-// Unbriefed returns entries worth briefing that have no brief yet, or a stale one (>45 d) —
-// deadlines and call windows move, so briefs are refreshed on the daily schedule.
+// Unbriefed returns entries worth briefing that have no brief yet. Briefs are
+// never refreshed automatically (owner uses "re-brief all"), so the daily hook
+// costs nothing unless new entries were seeded.
 func Unbriefed(ctx context.Context, db *sql.DB, min, limit int) ([]Entry, error) {
-	rows, err := db.QueryContext(ctx, `SELECT `+cols+` FROM funding WHERE score >= ? AND status NOT IN ('skip','rejected','won') AND (briefed_at IS NULL OR briefed_at < datetime('now','-45 days')) ORDER BY
+	rows, err := db.QueryContext(ctx, `SELECT `+cols+` FROM funding WHERE score >= ? AND status NOT IN ('skip','rejected','won') AND briefed_at IS NULL ORDER BY
 		CASE WHEN deadline <> '' AND deadline >= date('now') THEN 0 ELSE 1 END, score DESC LIMIT ?`, min, limit)
 	if err != nil {
 		return nil, err
