@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Funding radar · admin</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="/static/radar.css?v=22">
+<link rel="stylesheet" href="/static/radar.css?v=23">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -29,6 +29,8 @@
 <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
 <symbol id="i-briefcase" viewBox="0 0 24 24"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></symbol>
 <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 12h.01M3 18h.01M3 6h.01M8 12h13M8 18h13M8 6h13"/></symbol>
+<symbol id="i-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.56"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
 <symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M20.523 10.896a4 4 0 0 0-.585-.396M12 18v-2"/></symbol>
 </svg>
 
@@ -36,14 +38,20 @@
 <nav class="top">{{if .Owner}}<a href="/admin"><svg class="i"><use href="#i-back"/></svg>admin</a>{{end}}<span class="sp"></span><a href="/admin/jobs"><svg class="i"><use href="#i-briefcase"/></svg>jobs</a>{{if .Owner}}<a href="/admin/config"><svg class="i"><use href="#i-cog"/></svg>config{{if .Viewers}} <span class="n">{{.Viewers}}</span>{{end}}</a>{{end}}<a href="/"><svg class="i"><use href="#i-globe"/></svg>site</a></nav>
 <h1>Funding radar</h1>
 <p class="lead">Grants · prizes · accelerators · investors for Veridical Earth / kohlschwarz.at apps. Score = suitability <em>now</em> (solo founder, no entity, Vienna + CAR).</p>
-<ul class="stats">
-  <li title="Hand-curated and hand-scored, no LLM"><svg class="i"><use href="#i-check"/></svg>verified <time>2026-09-03</time></li>
+<ul class="stats" id="status" data-running="{{.Activity.Running}}" data-since="{{.Activity.Since}}" data-done="{{.Activity.Done}}">
+  <li class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></li>
+  <li id="upd" title="Scores and deadlines hand-verified against official pages"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-check"/></svg>verified <time>2026-09-07</time></li>
   <li><svg class="i"><use href="#i-list"/></svg>{{len .Rows}} entries</li>
+  <li title="Page-read LLM briefs (muse-glimmer); shared budget with jobs: {{.MonthUSD}} of {{.Budget}} this month"><svg class="i"><use href="#i-brain"/></svg>{{.Briefed}} briefed{{if .Unbriefed}} · {{.Unbriefed}} pending{{end}}{{if .BriefDate}} <time>{{.BriefDate}}</time>{{end}}</li>
   <li{{if .Upcoming}} class="hi"{{end}}><svg class="i"><use href="#i-cal"/></svg>{{len .Upcoming}} due ≤ 60 d</li>
   <li title="Deadlines ≤ 60 days for score ≥ 40 go into the Monday radar email"><svg class="i"><use href="#i-mail"/></svg>Monday email</li>
 </ul>
 {{if .Msg}}<p class="msg">{{.Msg}}</p>{{end}}
-{{if .Owner}}<div class="bar one"><form method="post" action="/admin/funding/reseed"><button class="ghost" title="Refreshes curated fields from seed.go; keeps your status and notes"><svg class="i"><use href="#i-refresh"/></svg>reseed from code</button></form></div>
+{{if .Owner}}<div class="bar" id="bar">
+<form method="post" action="/admin/funding/brief"><button title="Read each official page and write a 5-line brief for entries without one (score ≥ 35, open). Uses the shared LLM budget."><svg class="i"><use href="#i-brain"/></svg>brief{{if .Unbriefed}} <span class="n">{{.Unbriefed}}</span>{{end}}</button></form>
+<form method="post" action="/admin/funding/brief" onsubmit="return confirm('Regenerate ALL briefs? Costs a few cents of LLM budget.')"><input type="hidden" name="all" value="1"><button class="ghost" title="Drop and regenerate every brief"><svg class="i"><use href="#i-refresh"/></svg>re-brief all</button></form>
+<form method="post" action="/admin/funding/reseed"><button class="ghost" title="Refreshes curated fields from seed.go; keeps your status, notes and briefs"><svg class="i"><use href="#i-undo"/></svg>reseed</button></form>
+</div>
 <div class="panels">
 <details class="panel fb"><summary><svg class="i chev"><use href="#i-chev"/></svg><span class="t">Taught the radar</span><span class="n"><b><svg class="i"><use href="#i-up"/></svg>{{.Feedback.Up}}</b><b><svg class="i"><use href="#i-down"/></svg>{{.Feedback.Down}}</b><b><svg class="i"><use href="#i-trash"/></svg>{{.Feedback.Trashed}}</b></span></summary>
 <div class="body">{{if .Feedback.Reasons}}<p class="meta">Trash reasons: {{range $i, $c := .Feedback.Reasons}}{{if $i}} · {{end}}<b>{{$c.Label}}</b> ×{{$c.N}}{{end}}</p>{{end}}
@@ -82,10 +90,11 @@
 <button data-f="vc">vc</button>
 <button data-f="up" title="Entries you gave a thumbs-up">liked</button>
 <span class="count" id="count"></span>
+{{if .Owner}}{{if .ShowHidden}}<a class="chip on" href="/admin/funding" data-tip="Hide skipped entries again"><svg class="i"><use href="#i-trash"/></svg></a>{{else}}<a class="chip" href="/admin/funding?hidden=1" data-tip="Show skipped entries too"><svg class="i"><use href="#i-trash"/></svg></a>{{end}}{{end}}
 </div>
 <div class="list">
 {{range .Rows}}{{$sc := .Score}}{{$dl := .DaysLeft}}
-<article class="card{{if .Pinned}} pinned{{end}}{{if or (eq .Status "skip") (eq .Status "rejected") (eq .Status "won")}} done{{end}}" id="f{{.ID}}" data-score="{{$sc}}" data-track="{{.Track}}" data-kind="{{.Kind}}" data-status="{{.Status}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}" data-soon="{{if and (ne .Deadline "") (not .Expired) (le $dl 60)}}1{{end}}">
+{{$hid := or (eq .Status "skip") (eq .Status "rejected")}}<article class="card{{if .Pinned}} pinned{{end}}{{if or $hid (eq .Status "won")}} done{{end}}{{if $hid}} hidden-row{{end}}"{{if and $hid (not $.ShowHidden)}} hidden{{end}} id="f{{.ID}}" data-score="{{$sc}}" data-track="{{.Track}}" data-kind="{{.Kind}}" data-status="{{.Status}}" data-hidden="{{if $hid}}1{{end}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}" data-soon="{{if and (ne .Deadline "") (not .Expired) (le $dl 60)}}1{{end}}">
   <span class="score {{if ge $sc 80}}s90{{else if ge $sc 60}}s70{{else if ge $sc 35}}s40{{else}}s0{{end}}">{{$sc}}</span>
   <a class="title" href="{{.URL}}" target="_blank" rel="noopener">{{.Name}}<svg class="i"><use href="#i-ext"/></svg></a>
   <div class="tags">
@@ -93,18 +102,25 @@
     {{if ne .Status "open"}}<span class="tag status {{.Status}}">{{.Status}}</span>{{end}}
     {{if and (ne .Deadline "") (not .Expired) (le $dl 60)}}<span class="tag soon"><svg class="i"><use href="#i-cal"/></svg> {{$dl}}d left</span>{{end}}
   </div>
-  <div class="line"><svg class="i"><use href="#i-coins"/></svg><span>{{.Amount}}</span></div>
-  <div class="line dl{{if .Expired}} past{{else if and (ne .Deadline "") (le $dl 60)}} soon{{end}}"><svg class="i"><use href="#i-cal"/></svg><span>{{.DL}}</span></div>
-  {{if .Note}}<div class="line why"><svg class="i"><use href="#i-arrow"/></svg><span>{{.Note}}</span></div>{{end}}
-  <button class="tog" type="button" aria-expanded="false"><svg class="i"><use href="#i-chev"/></svg><span class="open">eligibility, score &amp; status</span><span class="close">less</span></button>
-  <div class="more">
-    {{if .Eligibility}}<div class="line el"><svg class="i"><use href="#i-check"/></svg><span>{{.Eligibility}}</span></div>{{end}}
-    {{if .Why}}<div class="line sc"><svg class="i"><use href="#i-target"/></svg><span>{{.Why}}</span></div>{{end}}
+  <div class="facts">
+    <span class="fact"><svg class="i"><use href="#i-coins"/></svg><span>{{.Amount}}</span></span>
+    <span class="fact dl{{if .Expired}} past{{else if and (ne .Deadline "") (le $dl 60)}} soon{{end}}"><svg class="i"><use href="#i-cal"/></svg><span>{{if .Deadline}}<b>{{.Deadline}}</b>{{else}}<span class="dim">{{.ShortDL}}</span>{{end}}</span></span>
   </div>
-{{template "react" (dict "Owner" $.Owner "Reasons" $.Reasons "Radar" "grant" "ID" .ID "Vote" .Vote "Note" .UserNote "Pinned" .Pinned "Reason" .TrashReason "Statuses" $.Statuses "Status" .Status)}}
+{{$it := .BriefItems}}
+  <details class="brief{{if not $it}} plain{{end}}"><summary>
+    <span class="lbl">{{if $it}}brief{{else}}details{{end}}</span>
+    <span class="teaser">{{if $it}}{{.BriefTeaser}}{{else if .Eligibility}}{{.Eligibility}}{{else}}{{.Why}}{{end}}</span>
+    <svg class="i chev"><use href="#i-chev"/></svg></summary>
+    <div class="body">
+      {{if $it}}<dl>{{range $it}}<div class="{{.Label}}"><dt>{{.Label}}</dt><dd>{{.Text}}</dd></div>{{end}}</dl>{{end}}
+      <dl class="cur">{{if .DeadlineNote}}<div><dt>Window</dt><dd>{{.DeadlineNote}}</dd></div>{{end}}{{if .CleanNote}}<div><dt>Curator</dt><dd>{{.CleanNote}}</dd></div>{{end}}{{if and .Eligibility (not $it)}}<div><dt>Eligible</dt><dd>{{.Eligibility}}</dd></div>{{end}}{{if .Why}}<div><dt>Score {{$sc}}</dt><dd>{{.Why}}</dd></div>{{end}}</dl>
+      <div class="line meta"><svg class="i"><use href="#i-clock"/></svg><span>{{with .BriefedDate}}page read <b>{{.}}</b> · {{end}}{{with .VerifiedDate}}record verified <b>{{.}}</b> · {{else}}record unverified · {{end}}<a href="{{.URL}}" target="_blank" rel="noopener">official page</a></span></div>
+    </div>
+  </details>
+{{template "react" (dict "Owner" $.Owner "Reasons" $.Reasons "Radar" "grant" "ID" .ID "Vote" .Vote "Note" .UserNote "Pinned" .Pinned "Reason" .TrashReason "Hidden" $hid)}}
 </article>
 {{end}}
 </div>
-<script src="/static/radar.js?v=6"></script>
+<script src="/static/radar.js?v=9"></script>
 </body>
 </html>

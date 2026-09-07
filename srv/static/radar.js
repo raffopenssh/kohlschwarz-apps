@@ -28,11 +28,12 @@
       default:return d.track===f||d.kind===f||d.region===f;
     }
   }
+  var showHidden=/[?&]hidden=1/.test(location.search);
   function apply(f){
-    var n=0;cards.forEach(function(c){var m=match(c,f);c.hidden=!m;if(m)n++;});
+    var n=0;cards.forEach(function(c){var m=match(c,f)&&(showHidden||c.dataset.hidden!=='1');c.hidden=!m;if(m)n++;});
     bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.f===f?'true':'false');});
-    if(count)count.textContent=n+'/'+cards.length;
-    try{f?history.replaceState(null,'','?f='+f):history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
+    if(count)count.textContent=n+'/'+cards.filter(function(c){return showHidden||c.dataset.hidden!=='1';}).length;
+    try{var hq=showHidden?'hidden=1':'';history.replaceState(null,'',location.pathname+(f||hq?'?'+[hq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
   }
   bs.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.f);});});
   var q=new URLSearchParams(location.search).get('f');
@@ -130,18 +131,23 @@
       why.hidden=false;
       var chips=[].slice.call(why.querySelectorAll('.chips button'));
       chips.forEach(function(c){c.onclick=function(){chips.forEach(function(x){x.classList.toggle('on',x===c);});
-        var data={reason:c.dataset.reason};if(radar==='grant')data.status=R.querySelector('.stat select').value;
+        var data={reason:c.dataset.reason};if(radar==='grant')data.status=card.dataset.status||'skip';
         post(base+(radar==='job'?'hide/':'status/')+id,data).then(function(){card.dataset.asked='1';why.hidden=true;flash('thanks');}).catch(function(){flash('failed',1);});};});
       why.querySelector('.skip').onclick=function(){why.hidden=true;};
     }
-    // trash / restore (jobs)
+    // trash / restore (jobs: hidden flag; grants: status skip/open)
     var tf=R.querySelector('.trash');if(tf){tf.addEventListener('submit',function(e){e.preventDefault();
-      var un=!!tf.querySelector('[name=unhide]');card.classList.add('leaving');
-      post(base+'hide/'+id,un?{unhide:'1'}:{}).then(function(j){
+      var un=!!(tf.querySelector('[name=unhide]')||(tf.querySelector('[name=status]')||{}).value==='open');card.classList.add('leaving');
+      var req=radar==='job'?post(base+'hide/'+id,un?{unhide:'1'}:{}):post(base+'status/'+id,{status:un?'open':'skip'});
+      req.then(function(j){
+        if(radar==='grant'){card.dataset.status=j.status;card.classList.toggle('done',j.hidden);var tg=card.querySelector('.tags .tag.status');if(tg)tg.remove();
+          if(j.status!=='open'){var sp=document.createElement('span');sp.className='tag status '+j.status;sp.textContent=j.status;card.querySelector('.tags').appendChild(sp);}}
         card.classList.remove('leaving');card.classList.toggle('hidden-row',j.hidden);card.dataset.hidden=j.hidden?'1':'';
         var showingHidden=/[?&]hidden=1/.test(location.search);
-        tf.innerHTML=j.hidden?'<input type="hidden" name="unhide" value="1"><button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>'
-          :'<button class="ib" data-tip="Not relevant" aria-label="not relevant"><svg class="i"><use href="#i-trash"/></svg></button>';
+        var restore=radar==='job'?'<input type="hidden" name="unhide" value="1">':'<input type="hidden" name="status" value="open">';
+        var skip=radar==='job'?'':'<input type="hidden" name="status" value="skip">';
+        tf.innerHTML=j.hidden?restore+'<button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>'
+          :skip+'<button class="ib" data-tip="Not relevant" aria-label="not relevant"><svg class="i"><use href="#i-trash"/></svg></button>';
         if(j.hidden&&j.ask_reason)askWhy();else why.hidden=true;
         if(j.hidden&&!showingHidden&&!j.ask_reason){setTimeout(function(){card.hidden=true;filterCount();},250);}
         else if(j.hidden&&!showingHidden){why.querySelector('.skip').addEventListener('click',function(){card.hidden=true;filterCount();},{once:true});
@@ -149,16 +155,6 @@
         flash(j.hidden?'removed':'restored');
       }).catch(function(){card.classList.remove('leaving');flash('failed',1);});
     });}
-    // status (grants)
-    var sf=R.querySelector('.stat');if(sf){var sel=sf.querySelector('select'),prev=sel.value;
-      sel.addEventListener('change',function(){var v=sel.value;
-        post(base+'status/'+id,{status:v}).then(function(j){prev=j.status;card.dataset.status=j.status;
-          card.classList.toggle('done',/^(skip|rejected|won)$/.test(j.status));
-          var tg=card.querySelector('.tags .tag.status');if(tg)tg.remove();
-          if(j.status!=='open'){var sp=document.createElement('span');sp.className='tag status '+j.status;sp.textContent=j.status;card.querySelector('.tags').appendChild(sp);}
-          if(j.ask_reason)askWhy();else why.hidden=true;flash('status: '+j.status);
-        }).catch(function(){sel.value=prev;flash('failed',1);});
-      });
-      sf.addEventListener('submit',function(e){e.preventDefault();});}
+
   });
 })();

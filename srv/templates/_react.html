@@ -1,5 +1,5 @@
 {{/* react: owner feedback bar for one radar card.
-     dict keys: Owner Radar(job|grant) ID Vote Note Hidden Pinned Reason [Statuses Status]
+     dict keys: Owner Radar(job|grant) ID Vote Note Hidden Pinned Reason  (grant: Hidden = status skip/rejected)
      Works without JS (plain forms); radar.js upgrades it to inline fetch + reason prompt. */}}
 {{define "react"}}{{$p := print "/admin/" (or (and (eq .Radar "job") "jobs") "funding") "/"}}{{if .Owner}}
 <div class="react" data-radar="{{.Radar}}" data-id="{{.ID}}">
@@ -16,8 +16,8 @@
     <button type="button" class="ib note-tog{{if .Note}} has{{end}}" aria-expanded="{{if .Note}}true{{else}}false{{end}}" data-tip="{{if .Note}}Edit note{{else}}Add note{{end}}" aria-label="note"><svg class="i"><use href="#i-pen"/></svg></button>
     <span class="saved" aria-live="polite"></span>
     <span class="grow"></span>
-    {{if .Statuses}}<form class="stat" method="post" action="/admin/funding/status/{{.ID}}"><select name="status" aria-label="status">{{$cur := .Status}}{{range .Statuses}}<option value="{{.}}"{{if eq . $cur}} selected{{end}}>{{.}}</option>{{end}}</select><button class="nojs">set</button></form>{{end}}
-    {{if eq .Radar "job"}}<form class="trash" method="post" action="/admin/jobs/hide/{{.ID}}">{{if .Hidden}}<input type="hidden" name="unhide" value="1"><button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>{{else}}<button class="ib" data-tip="Not relevant" aria-label="not relevant"><svg class="i"><use href="#i-trash"/></svg></button>{{end}}</form>{{end}}
+    {{if eq .Radar "job"}}<form class="trash" method="post" action="/admin/jobs/hide/{{.ID}}">{{if .Hidden}}<input type="hidden" name="unhide" value="1"><button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>{{else}}<button class="ib" data-tip="Not relevant" aria-label="not relevant"><svg class="i"><use href="#i-trash"/></svg></button>{{end}}</form>
+    {{else}}<form class="trash" method="post" action="/admin/funding/status/{{.ID}}">{{if .Hidden}}<input type="hidden" name="status" value="open"><button class="ib" data-tip="Restore to list" aria-label="restore"><svg class="i"><use href="#i-undo"/></svg></button>{{else}}<input type="hidden" name="status" value="skip"><button class="ib" data-tip="Not relevant (skip)" aria-label="skip"><svg class="i"><use href="#i-trash"/></svg></button>{{end}}</form>{{end}}
   </div>
   <form class="note-form" method="post" action="{{$p}}note/{{.ID}}"{{if not .Note}} hidden{{end}}>
     <textarea name="note" rows="1" placeholder="Your note — ⌘/Ctrl+Enter saves, Esc closes" aria-label="note">{{.Note}}</textarea>

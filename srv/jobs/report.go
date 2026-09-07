@@ -348,6 +348,10 @@ func WeeklyReport(ctx context.Context, db *sql.DB, to []string, siteURL string, 
 	return text, nil
 }
 
+// AfterFetch, when set, runs inside the daily scheduled slot after the jobs
+// pipeline (used by the funding radar for its LLM briefs); returns a log line.
+var AfterFetch func(ctx context.Context, db *sql.DB) string
+
 // Scheduler runs fetch daily-ish and fetch+rank+email once a week.
 // Weekly: Monday 06:00 UTC. Daily fetch: 04:00 UTC (keeps postings fresh, no LLM cost).
 // recipients is resolved at send time so newly added viewers are included.
@@ -373,7 +377,12 @@ func Scheduler(ctx context.Context, db *sql.DB, recipients func() []string, site
 		br := BriefPending(ctx, db, 60)
 		Current.Switch("check")
 		ck := CheckPending(ctx, db, 40)
-		Current.Finish(fmt.Sprintf("scheduled fetch: %d new · ranked %d · briefed %d · re-checked %d", r.NewCount, rk.Ranked, br.Ranked, ck.Found))
+		extra := ""
+		if AfterFetch != nil {
+			Current.Switch("brief")
+			extra = " · " + AfterFetch(ctx, db)
+		}
+		Current.Finish(fmt.Sprintf("scheduled fetch: %d new · ranked %d · briefed %d · re-checked %d%s", r.NewCount, rk.Ranked, br.Ranked, ck.Found, extra))
 		if time.Now().UTC().Weekday() == time.Monday {
 			if Current.Start("email") {
 				if _, err := WeeklyReport(ctx, db, recipients(), siteURL, false); err != nil {

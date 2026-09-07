@@ -155,9 +155,13 @@ func (s *Server) HandleAdminJobsStatus(w http.ResponseWriter, r *http.Request) {
 // startBackground kicks off fn under the single activity slot and redirects back
 // to the list, which shows a live "updating" indicator until fn finishes.
 func (s *Server) startBackground(w http.ResponseWriter, r *http.Request, kind string, timeout time.Duration, fn func(ctx context.Context) string) {
+	back := "/admin/jobs"
+	if strings.HasPrefix(r.URL.Path, "/admin/funding") {
+		back = "/admin/funding"
+	}
 	if !jobs.Current.Start(kind) {
 		st := jobs.Current.State()
-		http.Redirect(w, r, "/admin/jobs?msg="+url.QueryEscape("busy: "+st.Running+" already running"), http.StatusSeeOther)
+		http.Redirect(w, r, back+"?msg="+url.QueryEscape("busy: "+st.Running+" already running"), http.StatusSeeOther)
 		return
 	}
 	go func() {
@@ -171,7 +175,7 @@ func (s *Server) startBackground(w http.ResponseWriter, r *http.Request, kind st
 		}()
 		jobs.Current.Finish(fn(ctx))
 	}()
-	http.Redirect(w, r, "/admin/jobs", http.StatusSeeOther)
+	http.Redirect(w, r, back, http.StatusSeeOther)
 }
 
 func (s *Server) HandleAdminJobsFetch(w http.ResponseWriter, r *http.Request) {

@@ -203,7 +203,7 @@ func (s *Server) HandleAdminFundingStatus(w http.ResponseWriter, r *http.Request
 	case status != e.Status:
 		feedback.Log(ctx, s.DB, "grant", id, "status", "", status, e.Name, e.Track)
 	}
-	s.feedbackDone(w, r, back, map[string]any{"status": status, "ask_reason": trashed && status != e.Status && reason == "" && e.TrashReason == ""})
+	s.feedbackDone(w, r, back, map[string]any{"status": status, "hidden": trashed, "ask_reason": trashed && status != e.Status && reason == "" && e.TrashReason == ""})
 }
 
 func (s *Server) HandleAdminFundingVote(w http.ResponseWriter, r *http.Request) {

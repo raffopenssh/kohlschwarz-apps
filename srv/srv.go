@@ -663,11 +663,16 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /admin/funding/pin/{id}", s.HandleAdminFundingPin)
 	mux.HandleFunc("POST /admin/funding/note/{id}", s.HandleAdminFundingNote)
 	mux.HandleFunc("POST /admin/funding/reseed", s.HandleAdminFundingReseed)
+	mux.HandleFunc("POST /admin/funding/brief", s.HandleAdminFundingBrief)
 	if _, err := funding.Seed(context.Background(), s.DB); err != nil {
 		slog.Warn("funding seed", "error", err)
 	}
 	jobs.ReportExtra = func(ctx context.Context) (string, bool, []string) {
 		return funding.ReportSection(ctx, s.DB, s.siteURL(), 90, 40)
+	}
+	jobs.AfterFetch = func(ctx context.Context, db *sql.DB) string {
+		run := funding.BriefPending(ctx, db, 20)
+		return fmt.Sprintf("funding briefed %d", run.Ranked)
 	}
 	go jobs.Scheduler(context.Background(), s.DB, s.reportRecipients, s.siteURL())
 	mux.HandleFunc("GET /llm.txt", s.HandleLLMTxt)

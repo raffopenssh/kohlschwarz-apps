@@ -13,7 +13,7 @@ journalctl -u srv -n 50 --no-pager
 - Local check: `curl -u admin:$(grep ADMIN_PASSWORD .env|cut -d= -f2) localhost:8000/admin/jobs`. Headless browser can't send basic auth → save HTML to a tmp dir and serve with `busybox httpd` on a free port (8765 is often taken).
 - If restart loops with "address already in use": `sudo ss -ltnp | grep :8000` and kill the orphan `server`.
 - Templates are parsed per request (`renderTemplate`, FuncMap: `runAgo`) → template/CSS/JS edits need no rebuild, Go edits do. Bump `?v=` on `radar.css`/`radar.js` links after changes.
-- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 013 (pinned on job_postings + funding).
+- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 014 (funding.brief/briefed_at).
 - Commit with `git add <files>` explicitly (blind `git add -A` is blocked).
 
 ## Layout
@@ -42,7 +42,9 @@ db/                        sqlite open + migrations; dbgen = sqlc output for pub
 - Adding a source: append to `Sources` in sources.go; LinkedIn sleeps 6s between requests.
 
 ## Funding radar conventions
-- Data lives in code (`seed.go`); `reseed` replaces DB rows but keeps `status`/`user_note`. Scores/deadlines are manually verified — record notes under `srv/funding/verification-<date>/`.
+- Data lives in code (`seed.go`); `reseed` replaces DB rows but keeps `status`/`user_note`/`brief`. Scores/deadlines are manually verified — record notes under `srv/funding/verification-<date>/`; bump `VerifiedDate` in verified.go (the `[verified …]` note prefix is stripped by `CleanNote`/`VerifiedDate` at render).
+- LLM briefs (`brief.go`): `BriefPending` reads the official page (`jobs.FetchPageText`) and asks muse-glimmer for 5 lines What/Money/Eligible/Timeline/Next for score ≥ 35, non-skipped entries; stale (> 45 d) ones are re-briefed. Runs in the daily scheduler slot via `jobs.AfterFetch` (kind `fbrief` in job_runs → shared budget) or via the "brief" / "re-brief all" buttons (`/admin/funding/brief`, `all=1`). The card shows amount + date in the header, the brief as collapsed `<details>` (teaser = Next line), and the curated Window/Curator/Score lines beneath it.
+- Trash = status `skip` via the shared `react` partial (`Hidden` = skip|rejected); skipped rows are rendered with `hidden` and shown with `?hidden=1` (trash chip in the filter bar). The status `<select>` is gone.
 
 ## Style
 - Mobile-first, text-first admin UI; no frameworks, inline SVG symbols, system fonts. Descriptive commits (see `git log`).

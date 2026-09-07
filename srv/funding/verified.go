@@ -118,6 +118,9 @@ func applyVerified(e Entry) Entry {
 	if o.Why != "" {
 		e.Why = o.Why
 	}
-	e.Note = "[verified 2026-09-03] " + e.Note
+	e.Note = "[verified " + VerifiedDate + "] " + e.Note
 	return e
 }
+
+// VerifiedDate is the date of the last manual check of the Verified overrides.
+const VerifiedDate = "2026-09-03"

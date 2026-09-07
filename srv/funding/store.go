@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -29,9 +30,11 @@ type Entry struct {
 	Why          string
 	Status       string
 	UserNote     string
-	Vote         int    // owner thumbs: 1 up, -1 down, 0 none
-	TrashReason  string // why skipped/rejected ('' = not given)
-	Pinned       bool   // owner-starred: always listed first
+	Vote         int     // owner thumbs: 1 up, -1 down, 0 none
+	TrashReason  string  // why skipped/rejected ('' = not given)
+	Pinned       bool    // owner-starred: always listed first
+	Brief        string  // LLM brief (brief.go), "" when not yet generated
+	BriefedAt    *string // when the brief was generated
 }
 
 // DaysLeft returns days until deadline, or -1 when unknown.
@@ -61,14 +64,14 @@ func (e Entry) DL() string {
 	return "—"
 }
 
-const cols = `id, key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason, pinned`
+const cols = `id, key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason, pinned, brief, briefed_at`
 
 func scan(rows *sql.Rows) ([]Entry, error) {
 	var out []Entry
 	for rows.Next() {
 		var e Entry
 		var pinned int64
-		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason, &pinned); err != nil {
+		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason, &pinned, &e.Brief, &e.BriefedAt); err != nil {
 			return nil, err
 		}
 		e.Pinned = pinned == 1
@@ -201,4 +204,32 @@ func ReportSection(ctx context.Context, db *sql.DB, siteURL string, days, minSco
 	}
 	fmt.Fprintf(&b, "  full list: %s/admin/funding\n", siteURL)
 	return b.String(), urgent, lines
+}
+
+var verifiedPrefixRe = regexp.MustCompile(`^\[verified (\d{4}-\d{2}-\d{2})\]\s*`)
+
+// CleanNote is the curator note without the "[verified …]" prefix.
+func (e Entry) CleanNote() string { return verifiedPrefixRe.ReplaceAllString(e.Note, "") }
+
+// VerifiedDate is the date embedded in the note prefix, or "" for unverified entries.
+func (e Entry) VerifiedDate() string {
+	if m := verifiedPrefixRe.FindStringSubmatch(e.Note); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
+// ShortDL is the deadline-note reduced to its first clause (for the header line).
+func (e Entry) ShortDL() string {
+	n := e.DeadlineNote
+	if n == "" {
+		return "no fixed date"
+	}
+	if i := strings.IndexAny(n, ";("); i > 0 {
+		n = strings.TrimSpace(n[:i])
+	}
+	if len(n) > 60 {
+		n = n[:57] + "…"
+	}
+	return n
 }

@@ -154,8 +154,18 @@ button.ghost:hover{color:var(--fg);background:var(--chip)}
 .line svg.i{position:relative;top:.1em;color:var(--faint)}
 .line.dl{color:var(--fg)}.line.dl.soon{color:var(--soon-fg);font-weight:600}.line.dl.past{color:var(--faint);text-decoration:line-through}
 .line.why{color:var(--fg)}
-.line.el{color:var(--muted)}.line.sc{color:var(--faint);font-size:.82rem}
-.more{margin-top:.2rem}
+/* funding: amount + deadline as a compact fact row (wraps on mobile) */
+.facts{display:flex;flex-wrap:wrap;gap:.15rem 1.1rem;margin-top:.2rem;font-size:.88rem;color:var(--fg)}
+.facts .fact{display:inline-flex;gap:.45em;align-items:baseline;min-width:0}
+.facts .fact svg.i{position:relative;top:.1em;color:var(--faint);flex:none}
+.facts .fact .dim{color:var(--muted);font-weight:400}
+.facts .dl.soon{color:var(--soon-fg)}.facts .dl.soon b{font-weight:700}
+.facts .dl.past{color:var(--faint)}.facts .dl.past b{text-decoration:line-through}
+.brief dl>div.Next dd{color:var(--fg);font-weight:600}
+.brief dl>div.Next dt{color:var(--s70)}
+.brief dl.cur{border-top:1px dashed var(--line);margin-top:.1rem;padding-top:.1rem}
+.brief dl.cur dt{color:var(--faint)}.brief dl.cur dd{color:var(--muted);font-size:.84rem}
+.brief .meta a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 /* one disclosure per card: brief items (or snippet) + meta + actions.
    Native <details>, one-line teaser when closed, animated open. */
 .brief{margin:.4rem 0 0;border:1px solid var(--line);border-radius:10px;background:var(--chip);font-size:.86rem;line-height:1.45;overflow:hidden}
@@ -174,7 +184,7 @@ button.ghost:hover{color:var(--fg);background:var(--chip)}
 .brief .body>*{overflow:hidden;margin:0;padding:0 .6rem}
 .brief .body>p{color:var(--fg);text-wrap:pretty;hyphens:auto;padding-bottom:.5rem}
 .brief .body>dl{padding-bottom:.25rem}
-.brief dl>div{display:grid;grid-template-columns:4.2em 1fr;gap:.15rem .75rem;padding:.38rem 0;border-top:1px solid var(--line)}
+.brief dl>div{display:grid;grid-template-columns:5.2em 1fr;gap:.15rem .75rem;padding:.38rem 0;border-top:1px solid var(--line)}
 .brief dl>div:first-child{border-top:0}
 .brief dt{font-size:.66rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:.2em}
 .brief dd{margin:0;color:var(--fg);text-wrap:pretty}
