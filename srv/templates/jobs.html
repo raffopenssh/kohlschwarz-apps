@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Park leadership radar · admin</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="/static/radar.css?v=20">
+<link rel="stylesheet" href="/static/radar.css?v=22">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -28,29 +28,48 @@
 <symbol id="i-pen" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.56"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></symbol>
+<symbol id="i-cog" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4M22 5h-4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol>
+<symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M20.523 10.896a4 4 0 0 0-.585-.396M12 18v-2"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5"/></symbol>
+<symbol id="i-cal2" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></symbol>
 </svg>
 
-<p class="top">{{if .Owner}}<a href="/admin">← admin</a> · {{end}}<a href="/admin/funding">funding radar</a>{{if .Owner}} · <a href="/admin/config">config{{if .Viewers}} <span class="n">{{.Viewers}} viewer{{if ne .Viewers 1}}s{{end}}</span>{{end}}</a>{{end}} · <a href="/">site</a></p>
+<header class="hd">
+<nav class="top">{{if .Owner}}<a href="/admin"><svg class="i"><use href="#i-back"/></svg>admin</a>{{end}}<span class="sp"></span><a href="/admin/funding"><svg class="i"><use href="#i-coins"/></svg>funding</a>{{if .Owner}}<a href="/admin/config"><svg class="i"><use href="#i-cog"/></svg>config{{if .Viewers}} <span class="n">{{.Viewers}}</span>{{end}}</a>{{end}}<a href="/"><svg class="i"><use href="#i-globe"/></svg>site</a></nav>
 <h1>Park leadership radar</h1>
-<p class="lead">National park director / manager roles &amp; high-level PA consultancies · Austria · Sub-Saharan Africa · global/EU · EN/DE/FR · {{.Sources}} sources · daily fetch+rank (04:00 UTC), weekly email (Mon).</p>
-<p class="status" id="status" data-running="{{.Activity.Running}}" data-since="{{.Activity.Since}}" data-done="{{.Activity.Done}}">
-  <span class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></span>
-  <span class="upd" id="upd"{{if .Activity.Running}} hidden{{end}}>{{if .Updated}}<svg class="i"><use href="#i-clock"/></svg>updated <time datetime="{{.Updated}}" title="{{.Updated}}">{{.UpdatedAgo}}</time>{{if .LastFetch}} · {{.LastFetch.NewCount}} new{{if .LastFetch.SourcesErr}} · <span class="warn">{{.LastFetch.SourcesErr}} sources failed</span>{{end}}{{end}}{{if .Unranked}} · <span class="warn">{{.Unranked}} unranked</span>{{end}}{{if .LastEmail}} · emailed {{runAgo .LastEmail}}{{end}}{{else}}never fetched{{end}}</span>
-</p>
+<p class="lead">National park director / manager roles &amp; senior PA consultancies · Austria · Sub-Saharan Africa · global/EU · EN/DE/FR</p>
+<ul class="stats" id="status" data-running="{{.Activity.Running}}" data-since="{{.Activity.Since}}" data-done="{{.Activity.Done}}">
+  <li class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></li>
+  <li id="upd"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-clock"/></svg>{{if .Updated}}updated <time datetime="{{.Updated}}" title="{{.Updated}}">{{.UpdatedAgo}}</time>{{else}}never fetched{{end}}</li>
+  {{if .LastFetch}}<li{{if .LastFetch.NewCount}} class="hi"{{end}}><svg class="i"><use href="#i-sparkle"/></svg>{{.LastFetch.NewCount}} new</li>{{end}}
+  {{if and .LastFetch .LastFetch.SourcesErr}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.LastFetch.SourcesErr}} sources failed</li>{{end}}
+  {{if .Unranked}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.Unranked}} unranked</li>{{end}}
+  <li><svg class="i"><use href="#i-rss"/></svg>{{.Sources}} sources</li>
+  <li title="Daily fetch + rank 04:00 UTC · weekly email Monday"><svg class="i"><use href="#i-mail"/></svg>{{if .LastEmail}}emailed {{runAgo .LastEmail}}{{else}}weekly email Mon{{end}}</li>
+</ul>
 {{if .Msg}}<p class="msg">{{.Msg}}</p>{{end}}{{if and .Activity.Last (not .Msg) (not .Activity.Running)}}<p class="msg" id="lastmsg">{{.Activity.Last}}</p>{{end}}
 {{if .Owner}}<div class="bar" id="bar">
-<form method="post" action="/admin/jobs/fetch"><button><svg class="i"><use href="#i-rss"/></svg>fetch now</button></form>
-<form method="post" action="/admin/jobs/email"><button><svg class="i"><use href="#i-mail"/></svg>email report</button></form>
-<a class="btn" href="/admin/jobs/report.txt">preview</a>
-{{if .ShowHidden}}<a class="btn" href="/admin/jobs"><svg class="i"><use href="#i-eye"/></svg>hide dismissed</a>{{else}}<a class="btn" href="/admin/jobs?hidden=1"><svg class="i"><use href="#i-trash"/></svg>show dismissed</a>{{end}}
+<form method="post" action="/admin/jobs/fetch"><button class="primary"><svg class="i"><use href="#i-rss"/></svg>fetch now</button></form>
+<form method="post" action="/admin/jobs/email"><button class="ghost"><svg class="i"><use href="#i-send"/></svg>email report</button></form>
+<a class="btn ghost" href="/admin/jobs/report.txt"><svg class="i"><use href="#i-file"/></svg>preview</a>
 </div>
-<details><summary>LLM cost &amp; budget</summary><p class="meta">{{.CostLine}}<br>Budget cap {{.Budget}}/month · email threshold score ≥ {{.MinScore}}</p>
-<form method="post" action="/admin/jobs/voucher" onsubmit="return confirm('Credit this month\'s spend so budget usage shows $0?')"><button class="small">apply voucher · reset this month to $0</button></form></details>{{else}}<p class="tiny">read-only view · <a href="/admin/jobs/report.txt">weekly report preview</a></p>{{end}}
-
-{{if .Owner}}<details class="fb"><summary>What you’ve taught the radar <span class="n">{{.Feedback.Up}} 👍 · {{.Feedback.Down}} 👎 · {{.Feedback.Trashed}} trashed</span></summary>
-{{if .Feedback.Reasons}}<p class="meta">Trash reasons: {{range $i, $c := .Feedback.Reasons}}{{if $i}} · {{end}}<b>{{$c.Label}}</b> ×{{$c.N}}{{end}}</p>{{end}}
-{{if .Feedback.Recent}}<ul class="fblog">{{range .Feedback.Recent}}<li><span class="act {{.Action}}">{{.Action}}</span> <span>{{.Title}}{{if .Org}} <span class="dim">· {{.Org}}</span>{{end}}{{if .Reason}} <span class="tag">{{.Reason}}</span>{{end}}{{if .Detail}} <span class="dim">— {{.Detail}}</span>{{end}}</span><time class="dim">{{slice .At 0 10}}</time></li>{{end}}</ul>{{else}}<p class="meta">No feedback yet. Thumbs, notes and trash reasons land here — and jobs feed the ranking prompt.</p>{{end}}
-</details>{{end}}
+<div class="panels">
+<details class="panel"><summary><svg class="i chev"><use href="#i-chev"/></svg><span class="t">LLM budget</span><span class="n">{{.MonthUSD}} of {{.Budget}}</span></summary>
+<div class="body"><p class="meta">{{.CostLine}}</p><p class="meta">Budget cap {{.Budget}}/month · email threshold score ≥ {{.MinScore}}</p>
+<form method="post" action="/admin/jobs/voucher" onsubmit="return confirm('Credit this month\'s spend so budget usage shows $0?')"><button class="small"><svg class="i"><use href="#i-undo"/></svg>apply voucher · reset month to $0</button></form></div></details>
+<details class="panel fb"><summary><svg class="i chev"><use href="#i-chev"/></svg><span class="t">Taught the radar</span><span class="n"><b><svg class="i"><use href="#i-up"/></svg>{{.Feedback.Up}}</b><b><svg class="i"><use href="#i-down"/></svg>{{.Feedback.Down}}</b><b><svg class="i"><use href="#i-trash"/></svg>{{.Feedback.Trashed}}</b></span></summary>
+<div class="body">{{if .Feedback.Reasons}}<p class="meta">Trash reasons: {{range $i, $c := .Feedback.Reasons}}{{if $i}} · {{end}}<b>{{$c.Label}}</b> ×{{$c.N}}{{end}}</p>{{end}}
+{{if .Feedback.Recent}}<ul class="fblog">{{range .Feedback.Recent}}<li><span class="act {{.Action}}">{{.Action}}</span> <span>{{.Title}}{{if .Org}} <span class="dim">· {{.Org}}</span>{{end}}{{if .Reason}} <span class="tag">{{.Reason}}</span>{{end}}{{if .Detail}} <span class="dim">— {{.Detail}}</span>{{end}}</span><time class="dim">{{slice .At 0 10}}</time></li>{{end}}</ul>{{else}}<p class="meta">No feedback yet. Thumbs, notes and trash reasons land here — and feed the ranking prompt.</p>{{end}}</div></details>
+</div>
+{{else}}<p class="tiny">read-only view · <a href="/admin/jobs/report.txt">weekly report preview</a></p>{{end}}
+</header>
 
 <h2>Postings <span class="n">{{len .Rows}}, deduplicated</span></h2>
 <div class="filters" id="filters">
@@ -65,6 +84,7 @@
 <button data-f="pinned" title="Postings you pinned">pinned</button>
 <button data-f="up" title="Postings you gave a thumbs-up">liked</button>
 <span class="count" id="count"></span>
+{{if .Owner}}{{if .ShowHidden}}<a class="chip on" href="/admin/jobs" data-tip="Hide dismissed postings again"><svg class="i"><use href="#i-trash"/></svg></a>{{else}}<a class="chip" href="/admin/jobs?hidden=1" data-tip="Show dismissed postings too"><svg class="i"><use href="#i-trash"/></svg></a>{{end}}{{end}}
 </div>
 <div class="list">
 {{range .Rows}}{{$sc := .ScoreVal}}{{$hr := .HardReasons}}

@@ -34,6 +34,8 @@ type jobsPage struct {
 	Cost       jobs.Cost
 	CostLine   string
 	Budget     string
+	BudgetPct  int // month spend as % of cap, 0–100
+	MonthUSD   string
 	MinScore   int
 	Sources    int
 	Unranked   int
@@ -108,7 +110,7 @@ func (s *Server) HandleAdminJobs(w http.ResponseWriter, r *http.Request) {
 	lf := jobs.LastRun(ctx, s.DB, "fetch")
 	data := jobsPage{
 		Hostname: s.Hostname, Rows: rows, Runs: runs, Cost: cost, CostLine: cost.CostLine(),
-		Budget: "$" + strconv.FormatFloat(jobs.MaxMonthUSD(), 'f', 2, 64), MinScore: jobs.ReportMinScore,
+		Budget: "$" + strconv.FormatFloat(jobs.MaxMonthUSD(), 'f', 2, 64), BudgetPct: budgetPct(cost.MonthUSD, jobs.MaxMonthUSD()), MonthUSD: fmt.Sprintf("$%.2f", cost.MonthUSD), MinScore: jobs.ReportMinScore,
 		Sources: len(jobs.Sources), Unranked: unranked, Msg: r.URL.Query().Get("msg"), ShowHidden: showHidden, Model: jobs.Model,
 		LastFetch: lf, LastEmail: jobs.LastRun(ctx, s.DB, "email"),
 		Activity: jobs.Current.State(), UpdatedAgo: runAgo(lf),
@@ -228,4 +230,19 @@ func (s *Server) HandleAdminJobsVoucher(w http.ResponseWriter, r *http.Request) 
 		msg = "voucher failed: " + err.Error()
 	}
 	http.Redirect(w, r, "/admin/jobs?msg="+url.QueryEscape(msg), http.StatusSeeOther)
+}
+
+// budgetPct clamps month spend / cap to 0–100 for the header progress bar.
+func budgetPct(spent, cap float64) int {
+	if cap <= 0 {
+		return 0
+	}
+	p := int(spent / cap * 100)
+	if p < 0 {
+		return 0
+	}
+	if p > 100 {
+		return 100
+	}
+	return p
 }
