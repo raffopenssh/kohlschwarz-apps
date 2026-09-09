@@ -46,6 +46,15 @@ type Row struct {
 	Dupes           int     // extra copies collapsed by Dedupe (not stored)
 }
 
+// SeenSince reports whether the posting (or any merged copy) was first seen at or after t
+// (a "YYYY-MM-DD HH:MM:SS" timestamp, typically the start of the last fetch run).
+func (r Row) SeenSince(t string) bool {
+	if t == "" {
+		return false
+	}
+	return r.FirstSeen >= t || r.latestFirstSeen >= t
+}
+
 // Since renders FirstSeen as a date.
 func (r Row) Since() string {
 	if len(r.FirstSeen) >= 10 {

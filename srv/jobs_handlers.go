@@ -39,6 +39,8 @@ type jobsPage struct {
 	MinScore   int
 	Sources    int
 	Unranked   int
+	NewCount   int    // visible deduped rows first seen by the last fetch run
+	FreshSince string // start of the last fetch run (rows with first_seen ≥ this are “fresh”)
 	Msg        string
 	ShowHidden bool
 	Model      string
@@ -106,12 +108,21 @@ func (s *Server) HandleAdminJobs(w http.ResponseWriter, r *http.Request) {
 	}
 	jobs.AttachEvents(ctx, s.DB, rows)
 	rows = jobs.Dedupe(rows)
-	cost := jobs.GetCost(ctx, s.DB)
 	lf := jobs.LastRun(ctx, s.DB, "fetch")
+	freshSince, newCount := "", 0
+	if lf != nil {
+		freshSince = lf.Started
+		for _, x := range rows {
+			if x.SeenSince(freshSince) && !x.Hidden {
+				newCount++
+			}
+		}
+	}
+	cost := jobs.GetCost(ctx, s.DB)
 	data := jobsPage{
 		Hostname: s.Hostname, Rows: rows, Runs: runs, Cost: cost, CostLine: cost.CostLine(),
 		Budget: "$" + strconv.FormatFloat(jobs.MaxMonthUSD(), 'f', 2, 64), BudgetPct: budgetPct(cost.MonthUSD, jobs.MaxMonthUSD()), MonthUSD: fmt.Sprintf("$%.2f", cost.MonthUSD), MinScore: jobs.ReportMinScore,
-		Sources: len(jobs.Sources), Unranked: unranked, Msg: r.URL.Query().Get("msg"), ShowHidden: showHidden, Model: jobs.Model,
+		Sources: len(jobs.Sources), Unranked: unranked, NewCount: newCount, FreshSince: freshSince, Msg: r.URL.Query().Get("msg"), ShowHidden: showHidden, Model: jobs.Model,
 		LastFetch: lf, LastEmail: jobs.LastRun(ctx, s.DB, "email"),
 		Activity: jobs.Current.State(), UpdatedAgo: runAgo(lf),
 		Owner: owner, Viewers: len(s.viewers(ctx)),

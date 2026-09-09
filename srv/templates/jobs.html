@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Park leadership radar · admin</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="/static/radar.css?v=22">
+<link rel="stylesheet" href="/static/radar.css?v=24">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -48,7 +48,7 @@
 <ul class="stats" id="status" data-running="{{.Activity.Running}}" data-since="{{.Activity.Since}}" data-done="{{.Activity.Done}}">
   <li class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></li>
   <li id="upd"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-clock"/></svg>{{if .Updated}}updated <time datetime="{{.Updated}}" title="{{.Updated}}">{{.UpdatedAgo}}</time>{{else}}never fetched{{end}}</li>
-  {{if .LastFetch}}<li{{if .LastFetch.NewCount}} class="hi"{{end}}><svg class="i"><use href="#i-sparkle"/></svg>{{.LastFetch.NewCount}} new</li>{{end}}
+  {{if .LastFetch}}<li{{if .NewCount}} class="hi"{{end}}><a class="fl" href="/admin/jobs?f=fresh" data-filter="fresh" title="Show only postings found by the last fetch"><svg class="i"><use href="#i-sparkle"/></svg>{{.NewCount}} new</a></li>{{end}}
   {{if and .LastFetch .LastFetch.SourcesErr}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.LastFetch.SourcesErr}} sources failed</li>{{end}}
   {{if .Unranked}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.Unranked}} unranked</li>{{end}}
   <li><svg class="i"><use href="#i-rss"/></svg>{{.Sources}} sources</li>
@@ -74,7 +74,8 @@
 <h2>Postings <span class="n">{{len .Rows}}, deduplicated</span></h2>
 <div class="filters" id="filters">
 <button aria-pressed="true" data-f="">all</button>
-<button data-f="new">new</button>
+<button data-f="fresh" title="Found by the last fetch"{{if not .NewCount}} hidden{{end}}>last fetch</button>
+<button data-f="new" title="First seen in the last 8 days">new</button>
 <button data-f="top">score ≥ 70</button>
 <button data-f="ssa">africa</button>
 <button data-f="at">austria</button>
@@ -87,8 +88,8 @@
 {{if .Owner}}{{if .ShowHidden}}<a class="chip on" href="/admin/jobs" data-tip="Hide dismissed postings again"><svg class="i"><use href="#i-trash"/></svg></a>{{else}}<a class="chip" href="/admin/jobs?hidden=1" data-tip="Show dismissed postings too"><svg class="i"><use href="#i-trash"/></svg></a>{{end}}{{end}}
 </div>
 <div class="list">
-{{range .Rows}}{{$sc := .ScoreVal}}{{$hr := .HardReasons}}
-{{$v := .Verdict}}<article class="card{{if .IsNew}} new{{end}}{{if .Pinned}} pinned{{end}}{{if .Hidden}} hidden-row{{end}}{{if or (eq $v "closed") (eq $v "gone")}} ended{{end}}" data-new="{{if .IsNew}}1{{end}}" data-score="{{$sc}}" data-region="{{.Region}}" data-deadline="{{.Deadline}}" data-verdict="{{.Verdict}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-hidden="{{if .Hidden}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}">
+{{$fs := .FreshSince}}{{range .Rows}}{{$sc := .ScoreVal}}{{$hr := .HardReasons}}
+{{$v := .Verdict}}<article class="card{{if .IsNew}} new{{end}}{{if .Pinned}} pinned{{end}}{{if .Hidden}} hidden-row{{end}}{{if or (eq $v "closed") (eq $v "gone")}} ended{{end}}" data-new="{{if .IsNew}}1{{end}}" data-fresh="{{if .SeenSince $fs}}1{{end}}" data-score="{{$sc}}" data-region="{{.Region}}" data-deadline="{{.Deadline}}" data-verdict="{{.Verdict}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-hidden="{{if .Hidden}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}">
   <span class="score {{if ge $sc 85}}s90{{else if ge $sc 65}}s70{{else if ge $sc 35}}s40{{else}}s0{{end}}">{{if lt $sc 0}}–{{else}}{{$sc}}{{end}}</span>
   {{with .Verdict}}<span class="verdict {{if eq . "hard to fill"}}hard{{else}}ended{{end}}" title="{{$hr}}">{{.}}</span>{{end}}
   <a class="title" href="{{.URL}}" target="_blank" rel="noopener">{{.Title}}<svg class="i"><use href="#i-ext"/></svg></a>
@@ -128,6 +129,6 @@
 {{end}}
 </ul>
 </details>
-<script src="/static/radar.js?v=9"></script>
+<script src="/static/radar.js?v=10"></script>
 </body>
 </html>

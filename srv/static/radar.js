@@ -16,6 +16,7 @@
     switch(f){
       case '':return true;
       case 'new':return d.new==='1';
+      case 'fresh':return d.fresh==='1';
       case 'top':return +d.score>=70;
       case 'deadline':return !!d.deadline;
       case 'hard':return d.verdict==='hard to fill';
@@ -31,11 +32,18 @@
   var showHidden=/[?&]hidden=1/.test(location.search);
   function apply(f){
     var n=0;cards.forEach(function(c){var m=match(c,f)&&(showHidden||c.dataset.hidden!=='1');c.hidden=!m;if(m)n++;});
-    bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.f===f?'true':'false');});
+    bs.forEach(function(b){var on=b.dataset.f===f;b.setAttribute('aria-pressed',on?'true':'false');if(on&&b.scrollIntoView&&bar.scrollWidth>bar.clientWidth)b.scrollIntoView({block:'nearest',inline:'center'});});
+    [].forEach.call(document.querySelectorAll('[data-filter]'),function(a){a.classList.toggle('on',a.dataset.filter===f);});
     if(count)count.textContent=n+'/'+cards.filter(function(c){return showHidden||c.dataset.hidden!=='1';}).length;
     try{var hq=showHidden?'hidden=1':'';history.replaceState(null,'',location.pathname+(f||hq?'?'+[hq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
   }
   bs.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.f);});});
+  // stat chips elsewhere on the page (e.g. “5 new” in the header) toggle the same filter
+  [].forEach.call(document.querySelectorAll('[data-filter]'),function(a){a.addEventListener('click',function(e){
+    e.preventDefault();var f=a.dataset.filter,cur=bar.querySelector('button[aria-pressed=true]');
+    apply(cur&&cur.dataset.f===f?'':f);
+    var h2=bar.previousElementSibling;(h2||bar).scrollIntoView({behavior:'smooth',block:'start'});
+  });});
   var q=new URLSearchParams(location.search).get('f');
   apply(q&&bs.some(function(b){return b.dataset.f===q;})?q:'');
 })();

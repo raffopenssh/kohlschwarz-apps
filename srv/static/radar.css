@@ -40,6 +40,11 @@ h2 .n{font-weight:normal;color:var(--faint);text-transform:none;letter-spacing:0
 .stats li.warn{color:var(--soon-fg);font-weight:600}.stats li.warn svg.i{color:currentColor}
 .stats li.live{color:var(--soon-fg);font-weight:600}.stats li.live svg.i{color:currentColor}
 .stats [hidden]{display:none}
+.stats a.fl{display:inline-flex;align-items:center;gap:.35em;color:inherit;text-decoration:none;border-radius:999px;padding:.1em .6em;margin:-.1em -.6em;min-height:32px;border:1px solid transparent;-webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s}
+.stats a.fl:hover{background:var(--chip);border-color:var(--line)}
+.stats a.fl.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}.stats a.fl.on svg.i{color:inherit}
+.stats li.hi a.fl:not(.on){border-color:var(--line);background:var(--chip)}
+.stats a.fl:active{transform:scale(.97)}
 .hd .msg{margin:.7rem 0 0}
 .hd .bar{margin:.9rem 0 0;gap:.25rem}
 .hd .bar .tiny{margin-left:.3rem}
