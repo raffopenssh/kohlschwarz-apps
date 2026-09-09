@@ -11,6 +11,7 @@ import (
 	"srv.exe.dev/srv/feedback"
 	"srv.exe.dev/srv/funding"
 	"srv.exe.dev/srv/jobs"
+	"srv.exe.dev/srv/seen"
 )
 
 type fundingPage struct {
@@ -30,6 +31,7 @@ type fundingPage struct {
 	BriefDate  string // newest brief date
 	MonthUSD   string
 	Budget     string
+	Unseen     int // non-skipped entries the current user has not had on screen yet
 }
 
 func (s *Server) HandleAdminFunding(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +46,13 @@ func (s *Server) HandleAdminFunding(w http.ResponseWriter, r *http.Request) {
 	}
 	up, _ := funding.Upcoming(ctx, s.DB, 60, 40)
 	data := fundingPage{Rows: rows, Upcoming: up, Msg: r.URL.Query().Get("msg"), Today: time.Now().UTC().Format("2006-01-02"), Statuses: []string{"open", "applied", "rejected", "won", "skip"}, Owner: owner, Viewers: len(s.viewers(ctx)), Reasons: feedback.Reasons, Feedback: s.feedbackPanel(ctx, "grant"), Activity: jobs.Current.State(), ShowHidden: r.URL.Query().Get("hidden") == "1"}
+	sn, _ := seen.Set(ctx, s.DB, "grant", seen.User(r.Header.Get("X-ExeDev-Email")))
+	for i := range rows {
+		rows[i].Seen = sn[rows[i].ID]
+		if !rows[i].Seen && rows[i].Status != "skip" && rows[i].Status != "rejected" {
+			data.Unseen++
+		}
+	}
 	for _, e := range rows {
 		if e.Brief != "" {
 			data.Briefed++

@@ -13,7 +13,7 @@ journalctl -u srv -n 50 --no-pager
 - Local check: `curl -u admin:$(grep ADMIN_PASSWORD .env|cut -d= -f2) localhost:8000/admin/jobs`. Headless browser can't send basic auth → save HTML to a tmp dir and serve with `busybox httpd` on a free port (8765 is often taken).
 - If restart loops with "address already in use": `sudo ss -ltnp | grep :8000` and kill the orphan `server`.
 - Templates are parsed per request (`renderTemplate`, FuncMap: `runAgo`) → template/CSS/JS edits need no rebuild, Go edits do. Bump `?v=` on `radar.css`/`radar.js` links after changes.
-- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 014 (funding.brief/briefed_at).
+- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 015 (seen table).
 - Commit with `git add <files>` explicitly (blind `git add -A` is blocked).
 
 ## Layout
@@ -26,6 +26,7 @@ srv/jobs/                  sources.go (71 feeds) · fetch.go · match.go (keywor
                            dedupe.go (union-find: canonical URL + org|title + synonym Jaccard) · report.go (weekly email, Scheduler)
                            signals.go (hiring-difficulty tags, CheckPending page re-check, no LLM) · status.go · store.go (Row, Run, events)
 srv/feedback/              feedback.go: Reasons (trash-reason chips), Log/Recent/ReasonCounts/Totals, PromptHints (owner verdicts → rank prompt)
+srv/seen/                  seen.go: per-user read state (Mark/Set/User); seen_handlers.go POST /admin/{jobs,funding}/seen {ids:[…]} (viewers allowed)
 srv/feedback_handlers.go   /admin/{jobs,funding}/{vote,note,pin}/{id}, jobs/hide, funding/status — JSON when Accept: application/json, else redirect
 srv/templates/_react.html  shared {{define "react"}} partial (star · thumbs · note · status · trash · one-time "why?"); icon-only, lucide paths, data-tip tooltips; renderTemplate globs _*.html
 srv/funding/               seed.go (hand-curated entries) · verified.go · store.go · verification-*/ (raw notes)
@@ -40,6 +41,8 @@ db/                        sqlite open + migrations; dbgen = sqlc output for pub
 - Every report/UI cost line must use `Cost.CostLine()`.
 - Owner feedback (both radars): ★ pin (`pinned`; `ORDER BY pinned DESC` first in both `List`s, radar.js moves the card client-side), 👍/👎 (`vote`), inline autosaving note (`user_note`), trash = jobs `hidden` / funding `skip|rejected`. After the first trash of an item the UI asks once for a reason chip (`trash_reason`, `ask_reason` in JSON reply; keys in `feedback.Reasons`). Everything is appended to `feedback_log`; `RankPending` appends `feedback.PromptHints` (last 40 job verdicts) to the system prompt. "What you've taught the radar" panel above the list summarises it.
 - Adding a source: append to `Sources` in sources.go; LinkedIn sleeps 6s between requests.
+
+- Seen/unseen (both radars, no LLM): radar.js marks a card seen after ≥50 % visible for 1 s (IntersectionObserver), POSTs ids batched (sendBeacon on pagehide). Per user = `seen.User(X-ExeDev-Email)` (basic auth → `admin`). Cards carry `data-seen`, `.card.unseen::before` hairline fades via `.seen-now`; `unseen` filter chip + tappable “N unseen” header stat (`#unseen-stat`/`#unseen-n`). Cards seen in the current visit stay in the `unseen` view until the filter is re-applied.
 
 ## Funding radar conventions
 - Data lives in code (`seed.go`); `reseed` replaces DB rows but keeps `status`/`user_note`/`brief`. Scores/deadlines are manually verified — record notes under `srv/funding/verification-<date>/`; bump `VerifiedDate` in verified.go (the `[verified …]` note prefix is stripped by `CleanNote`/`VerifiedDate` at render).

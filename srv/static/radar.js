@@ -17,6 +17,7 @@
       case '':return true;
       case 'new':return d.new==='1';
       case 'fresh':return d.fresh==='1';
+      case 'unseen':return d.seen!=='1'||d.seenNow==='1'; // cards seen this visit stay until the filter is re-applied (Feedly-style sweep)
       case 'top':return +d.score>=70;
       case 'deadline':return !!d.deadline;
       case 'hard':return d.verdict==='hard to fill';
@@ -37,15 +38,56 @@
     if(count)count.textContent=n+'/'+cards.filter(function(c){return showHidden||c.dataset.hidden!=='1';}).length;
     try{var hq=showHidden?'hidden=1':'';history.replaceState(null,'',location.pathname+(f||hq?'?'+[hq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
   }
-  bs.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.f);});});
+  function sweep(){cards.forEach(function(c){delete c.dataset.seenNow;});}
+  bs.forEach(function(b){b.addEventListener('click',function(){sweep();apply(b.dataset.f);});});
   // stat chips elsewhere on the page (e.g. “5 new” in the header) toggle the same filter
   [].forEach.call(document.querySelectorAll('[data-filter]'),function(a){a.addEventListener('click',function(e){
-    e.preventDefault();var f=a.dataset.filter,cur=bar.querySelector('button[aria-pressed=true]');
+    e.preventDefault();var f=a.dataset.filter,cur=bar.querySelector('button[aria-pressed=true]');sweep();
     apply(cur&&cur.dataset.f===f?'':f);
     var h2=bar.previousElementSibling;(h2||bar).scrollIntoView({behavior:'smooth',block:'start'});
   });});
   var q=new URLSearchParams(location.search).get('f');
   apply(q&&bs.some(function(b){return b.dataset.f===q;})?q:'');
+  window.radarRefilter=function(){var b=bar.querySelector('button[aria-pressed=true]');apply(b?b.dataset.f:'');};
+})();
+
+// seen tracking (Feedly/Slack-style): a card counts as seen once ≥50% of it has
+// been on screen for ~1s. Marked cards lose their left marker, the header
+// "N unseen" ticks down, and ids are POSTed in debounced batches (sendBeacon on
+// pagehide so the last screen is not lost). Per user, server-side.
+(function(){
+  if(!('IntersectionObserver' in window))return;
+  var list=document.querySelector('.list');if(!list)return;
+  var radar=(document.querySelector('.react')||{dataset:{}}).dataset.radar||(location.pathname.indexOf('/funding')>-1?'grant':'job');
+  var url='/admin/'+(radar==='grant'?'funding':'jobs')+'/seen';
+  var cards=[].slice.call(list.querySelectorAll('.card[data-id]')).filter(function(c){return c.dataset.seen!=='1';});
+  if(!cards.length)return;
+  var nEl=document.getElementById('unseen-n'),stat=document.getElementById('unseen-stat');
+  var queue=[],timers=new Map(),flushT;
+  function tick(){if(!nEl)return;var n=Math.max(0,(+nEl.textContent||0)-1);nEl.textContent=n;if(stat&&!n)stat.classList.remove('hi');}
+  function flush(beacon){
+    if(!queue.length)return;var ids=queue.splice(0),body=JSON.stringify({ids:ids});clearTimeout(flushT);
+    if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,new Blob([body],{type:'application/json'})))return;}catch(e){}}
+    fetch(url,{method:'POST',credentials:'same-origin',keepalive:true,headers:{'Content-Type':'application/json','Accept':'application/json'},body:body})
+      .catch(function(){queue=ids.concat(queue);flushT=setTimeout(flush,10000);});
+  }
+  function mark(c){
+    c.dataset.seen='1';c.dataset.seenNow='1';c.classList.add('seen-now');
+    if(c.dataset.hidden!=='1')tick();
+    queue.push(+c.dataset.id);clearTimeout(flushT);flushT=setTimeout(flush,queue.length>=25?200:2000);
+  }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){var c=e.target;
+      // ≥50% of the card, or (for cards taller than half the screen) ≥50% of the viewport filled by it
+      var vis=e.isIntersecting&&(e.intersectionRatio>=.5||e.intersectionRect.height>=innerHeight*.5);
+      if(vis){if(!timers.has(c))timers.set(c,setTimeout(function(){timers.delete(c);io.unobserve(c);mark(c);},1000));}
+      else if(timers.has(c)){clearTimeout(timers.get(c));timers.delete(c);}
+    });
+  },{threshold:[.1,.25,.5,.75]});
+  cards.forEach(function(c){io.observe(c);});
+  // tab hidden → the dwell timers must not fire blind
+  document.addEventListener('visibilitychange',function(){if(document.hidden){timers.forEach(function(t){clearTimeout(t);});timers.clear();flush(true);}});
+  window.addEventListener('pagehide',function(){flush(true);});
 })();
 
 // live "updating" indicator for /admin/jobs: poll status.json while a job runs, reload when done.

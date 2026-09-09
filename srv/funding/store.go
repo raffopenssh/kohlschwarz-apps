@@ -33,6 +33,7 @@ type Entry struct {
 	Vote         int     // owner thumbs: 1 up, -1 down, 0 none
 	TrashReason  string  // why skipped/rejected ('' = not given)
 	Pinned       bool    // owner-starred: always listed first
+	Seen         bool    // current user already had this card on screen (seen table)
 	Brief        string  // LLM brief (brief.go), "" when not yet generated
 	BriefedAt    *string // when the brief was generated
 }

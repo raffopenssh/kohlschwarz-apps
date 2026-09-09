@@ -44,6 +44,7 @@ type Row struct {
 	Events          []Event // change history (loaded by AttachEvents)
 	latestFirstSeen string  // newest first_seen among merged copies (Dedupe)
 	Dupes           int     // extra copies collapsed by Dedupe (not stored)
+	Seen            bool    // current user already had this card on screen (seen table, not stored here)
 }
 
 // SeenSince reports whether the posting (or any merged copy) was first seen at or after t

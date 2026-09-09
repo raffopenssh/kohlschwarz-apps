@@ -14,6 +14,7 @@ import (
 
 	"srv.exe.dev/srv/feedback"
 	"srv.exe.dev/srv/jobs"
+	"srv.exe.dev/srv/seen"
 )
 
 // siteURL is the base for admin links in emails. Admin pages rely on exe.dev
@@ -41,6 +42,7 @@ type jobsPage struct {
 	Unranked   int
 	NewCount   int    // visible deduped rows first seen by the last fetch run
 	FreshSince string // start of the last fetch run (rows with first_seen ≥ this are “fresh”)
+	Unseen     int    // visible deduped rows the current user has not had on screen yet
 	Msg        string
 	ShowHidden bool
 	Model      string
@@ -118,11 +120,19 @@ func (s *Server) HandleAdminJobs(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	sn, _ := seen.Set(ctx, s.DB, "job", seen.User(r.Header.Get("X-ExeDev-Email")))
+	unseen := 0
+	for i := range rows {
+		rows[i].Seen = sn[rows[i].ID]
+		if !rows[i].Seen && !rows[i].Hidden {
+			unseen++
+		}
+	}
 	cost := jobs.GetCost(ctx, s.DB)
 	data := jobsPage{
 		Hostname: s.Hostname, Rows: rows, Runs: runs, Cost: cost, CostLine: cost.CostLine(),
 		Budget: "$" + strconv.FormatFloat(jobs.MaxMonthUSD(), 'f', 2, 64), BudgetPct: budgetPct(cost.MonthUSD, jobs.MaxMonthUSD()), MonthUSD: fmt.Sprintf("$%.2f", cost.MonthUSD), MinScore: jobs.ReportMinScore,
-		Sources: len(jobs.Sources), Unranked: unranked, NewCount: newCount, FreshSince: freshSince, Msg: r.URL.Query().Get("msg"), ShowHidden: showHidden, Model: jobs.Model,
+		Sources: len(jobs.Sources), Unranked: unranked, NewCount: newCount, FreshSince: freshSince, Unseen: unseen, Msg: r.URL.Query().Get("msg"), ShowHidden: showHidden, Model: jobs.Model,
 		LastFetch: lf, LastEmail: jobs.LastRun(ctx, s.DB, "email"),
 		Activity: jobs.Current.State(), UpdatedAgo: runAgo(lf),
 		Owner: owner, Viewers: len(s.viewers(ctx)),

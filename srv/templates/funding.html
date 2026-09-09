@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Funding radar · admin</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="/static/radar.css?v=24">
+<link rel="stylesheet" href="/static/radar.css?v=25">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
 <symbol id="i-cal" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
 <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
@@ -42,6 +43,7 @@
   <li class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></li>
   <li id="upd" title="Scores and deadlines hand-verified against official pages"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-check"/></svg>verified <time>2026-09-07</time></li>
   <li><svg class="i"><use href="#i-list"/></svg>{{len .Rows}} entries</li>
+  <li id="unseen-stat"{{if .Unseen}} class="hi"{{else}} hidden{{end}}><a class="fl" href="/admin/funding?f=unseen" data-filter="unseen" title="Show only entries you haven't looked at yet"><svg class="i"><use href="#i-eye"/></svg><b id="unseen-n">{{.Unseen}}</b> unseen</a></li>
   <li title="Page-read LLM briefs (muse-glimmer); shared budget with jobs: {{.MonthUSD}} of {{.Budget}} this month"><svg class="i"><use href="#i-brain"/></svg>{{.Briefed}} briefed{{if .Unbriefed}} · {{.Unbriefed}} pending{{end}}{{if .BriefDate}} <time>{{.BriefDate}}</time>{{end}}</li>
   <li{{if .Upcoming}} class="hi"{{end}}><svg class="i"><use href="#i-cal"/></svg>{{len .Upcoming}} due ≤ 60 d</li>
   <li title="Deadlines ≤ 60 days for score ≥ 40 go into the Monday radar email"><svg class="i"><use href="#i-mail"/></svg>Monday email</li>
@@ -73,6 +75,7 @@
 <h2>All <span class="n">{{len .Rows}}</span></h2>
 <div class="filters" id="filters">
 <button aria-pressed="true" data-f="">all</button>
+<button data-f="unseen" title="Not yet on your screen"{{if not .Unseen}} hidden{{end}}>unseen</button>
 <button data-f="pinned" title="Entries you pinned">pinned</button>
 <button data-f="open">open</button>
 <button data-f="soon">due ≤ 60d</button>
@@ -94,7 +97,7 @@
 </div>
 <div class="list">
 {{range .Rows}}{{$sc := .Score}}{{$dl := .DaysLeft}}
-{{$hid := or (eq .Status "skip") (eq .Status "rejected")}}<article class="card{{if .Pinned}} pinned{{end}}{{if or $hid (eq .Status "won")}} done{{end}}{{if $hid}} hidden-row{{end}}"{{if and $hid (not $.ShowHidden)}} hidden{{end}} id="f{{.ID}}" data-score="{{$sc}}" data-track="{{.Track}}" data-kind="{{.Kind}}" data-status="{{.Status}}" data-hidden="{{if $hid}}1{{end}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}" data-soon="{{if and (ne .Deadline "") (not .Expired) (le $dl 60)}}1{{end}}">
+{{$hid := or (eq .Status "skip") (eq .Status "rejected")}}<article class="card{{if not .Seen}} unseen{{end}}{{if .Pinned}} pinned{{end}}{{if or $hid (eq .Status "won")}} done{{end}}{{if $hid}} hidden-row{{end}}"{{if and $hid (not $.ShowHidden)}} hidden{{end}} id="f{{.ID}}" data-score="{{$sc}}" data-track="{{.Track}}" data-kind="{{.Kind}}" data-status="{{.Status}}" data-hidden="{{if $hid}}1{{end}}" data-id="{{.ID}}" data-vote="{{.Vote}}" data-pinned="{{if .Pinned}}1{{end}}" data-seen="{{if .Seen}}1{{end}}" data-asked="{{if .TrashReason}}1{{end}}" data-soon="{{if and (ne .Deadline "") (not .Expired) (le $dl 60)}}1{{end}}">
   <span class="score {{if ge $sc 80}}s90{{else if ge $sc 60}}s70{{else if ge $sc 35}}s40{{else}}s0{{end}}">{{$sc}}</span>
   <a class="title" href="{{.URL}}" target="_blank" rel="noopener">{{.Name}}<svg class="i"><use href="#i-ext"/></svg></a>
   <div class="tags">
@@ -121,6 +124,6 @@
 </article>
 {{end}}
 </div>
-<script src="/static/radar.js?v=10"></script>
+<script src="/static/radar.js?v=11"></script>
 </body>
 </html>
