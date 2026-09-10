@@ -31,10 +31,26 @@
     }
   }
   var showHidden=/[?&]hidden=1/.test(location.search);
+  var list=document.querySelector('.list'),emptyEl;
+  function empty(f,n){
+    if(emptyEl){emptyEl.remove();emptyEl=null;}
+    if(n||!f||!list)return;
+    var caught=f==='unseen'||f==='new'||f==='fresh';
+    var lbl=(bs.filter(function(b){return b.dataset.f===f;})[0]||{}).textContent||f;
+    emptyEl=document.createElement('div');emptyEl.className='empty'+(caught?'':' neutral');
+    emptyEl.innerHTML='<div class="ring"><svg viewBox="0 0 24 24">'+(caught?'<path d="M20 6 9 17l-5-5"/>':'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>')+'</svg></div>'
+      +'<h3>'+(caught?'You\u2019re all caught up':'Nothing matches \u201c'+lbl+'\u201d')+'</h3>'
+      +'<p>'+(caught?'Every item here has crossed your screen. New ones will show up after the next fetch.':'Try another filter or clear this one.')+'</p>'
+      +'<button type="button">Show everything</button>';
+    emptyEl.querySelector('button').addEventListener('click',function(){sweep();apply('');});
+    list.appendChild(emptyEl);
+  }
   function apply(f){
     var n=0;cards.forEach(function(c){var m=match(c,f)&&(showHidden||c.dataset.hidden!=='1');c.hidden=!m;if(m)n++;});
+    empty(f,n);
     bs.forEach(function(b){var on=b.dataset.f===f;b.setAttribute('aria-pressed',on?'true':'false');if(on&&b.scrollIntoView&&bar.scrollWidth>bar.clientWidth)b.scrollIntoView({block:'nearest',inline:'center'});});
     [].forEach.call(document.querySelectorAll('[data-filter]'),function(a){a.classList.toggle('on',a.dataset.filter===f);});
+    var us=document.getElementById('unseen-stat');if(us&&us.classList.contains('done')&&f!=='unseen'&&!us.classList.contains('bye')){us.classList.add('bye');setTimeout(function(){us.hidden=true;},520);var ub=bar.querySelector('button[data-f=unseen]');if(ub)ub.hidden=true;}
     if(count)count.textContent=n+'/'+cards.filter(function(c){return showHidden||c.dataset.hidden!=='1';}).length;
     try{var hq=showHidden?'hidden=1':'';history.replaceState(null,'',location.pathname+(f||hq?'?'+[hq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
   }
@@ -64,7 +80,26 @@
   if(!cards.length)return;
   var nEl=document.getElementById('unseen-n'),stat=document.getElementById('unseen-stat');
   var queue=[],timers=new Map(),flushT;
-  function tick(){if(!nEl)return;var n=Math.max(0,(+nEl.textContent||0)-1);nEl.textContent=n;if(stat&&!n)stat.classList.remove('hi');}
+  var reduce=matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function tick(){
+    if(!nEl)return;var n=Math.max(0,(+nEl.textContent||0)-1);
+    nEl.textContent=n;nEl.classList.remove('roll');void nEl.offsetWidth;nEl.classList.add('roll');
+    if(n||!stat||stat.classList.contains('done'))return;
+    // 0 reached: swap the eye for a check, say "all caught up", hold, fold the pill away.
+    var a=stat.querySelector('a.fl'),use=stat.querySelector('use'),lbl=stat.querySelector('.lbl');
+    stat.classList.remove('hi');stat.classList.add('done');
+    if(use&&document.getElementById('i-check'))use.setAttribute('href','#i-check');
+    if(lbl)lbl.textContent='all caught up';
+    if(a){a.title='Nothing unseen left';a.removeAttribute('href');}
+    var on=a&&a.classList.contains('on'); // filter active: keep the pill while the user is in the unseen view
+    setTimeout(function(){
+      if(on)return;
+      stat.classList.add('bye');
+      var chip=document.querySelector('#filters button[data-f=unseen]');
+      if(chip&&chip.getAttribute('aria-pressed')!=='true'){chip.classList.add('bye');setTimeout(function(){chip.hidden=true;},320);}
+      setTimeout(function(){stat.hidden=true;},reduce?0:520);
+    },reduce?1200:2600);
+  }
   function flush(beacon){
     if(!queue.length)return;var ids=queue.splice(0),body=JSON.stringify({ids:ids});clearTimeout(flushT);
     if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(url,new Blob([body],{type:'application/json'})))return;}catch(e){}}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Park leadership radar · admin</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="/static/radar.css?v=25">
+<link rel="stylesheet" href="/static/radar.css?v=27">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -49,7 +49,7 @@
   <li class="live" id="live"{{if not .Activity.Running}} hidden{{end}}><svg class="i spin"><use href="#i-spin"/></svg><span id="live-text">{{if .Activity.Running}}{{.Activity.Running}}ing…{{end}}</span></li>
   <li id="upd"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-clock"/></svg>{{if .Updated}}updated <time datetime="{{.Updated}}" title="{{.Updated}}">{{.UpdatedAgo}}</time>{{else}}never fetched{{end}}</li>
   {{if .LastFetch}}<li{{if .NewCount}} class="hi"{{end}}><a class="fl" href="/admin/jobs?f=fresh" data-filter="fresh" title="Show only postings found by the last fetch"><svg class="i"><use href="#i-sparkle"/></svg><b>{{.NewCount}}</b> new</a></li>{{end}}
-  <li id="unseen-stat"{{if .Unseen}} class="hi"{{else}} hidden{{end}}><a class="fl" href="/admin/jobs?f=unseen" data-filter="unseen" title="Show only postings you have not looked at yet"><svg class="i"><use href="#i-eye"/></svg><b id="unseen-n">{{.Unseen}}</b> unseen</a></li>
+  <li id="unseen-stat"{{if .Unseen}} class="hi"{{else}} hidden{{end}}><a class="fl" href="/admin/jobs?f=unseen" data-filter="unseen" title="Show only postings you have not looked at yet"><svg class="i"><use href="#i-eye"/></svg><b id="unseen-n">{{.Unseen}}</b> <span class="lbl">unseen</span></a></li>
   {{if and .LastFetch .LastFetch.SourcesErr}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.LastFetch.SourcesErr}} sources failed</li>{{end}}
   {{if .Unranked}}<li class="warn"><svg class="i"><use href="#i-alert"/></svg>{{.Unranked}} unranked</li>{{end}}
   <li><svg class="i"><use href="#i-rss"/></svg>{{.Sources}} sources</li>
@@ -131,6 +131,6 @@
 {{end}}
 </ul>
 </details>
-<script src="/static/radar.js?v=11"></script>
+<script src="/static/radar.js?v=12"></script>
 </body>
 </html>

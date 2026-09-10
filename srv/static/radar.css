@@ -367,3 +367,29 @@ details.runs>summary h2{display:inline;margin:0}
 .fblog .act{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.1em .45em;border-radius:4px;background:var(--chip);color:var(--chip-fg)}
 .fblog .act.up{background:var(--s90);color:#fff}.fblog .act.down,.fblog .act.trash{background:var(--soon-fg);color:#fff}
 .fblog time{font-family:var(--mono);font-size:.75rem}
+
+/* ── unseen → 0: count rolls, pill turns into "all caught up" with a drawn check,
+   holds a beat, then folds away. Empty filter → calm empty state card. ── */
+#unseen-n{display:inline-block;min-width:1ch;text-align:center}
+#unseen-n.roll{animation:roll .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes roll{0%{transform:translateY(-.55em);opacity:0}100%{transform:none;opacity:1}}
+#unseen-stat{max-width:16em;transition:max-width .45s cubic-bezier(.4,0,.2,1) .05s,opacity .3s ease,margin .45s cubic-bezier(.4,0,.2,1) .05s}
+#unseen-stat.done a.fl{border-color:transparent;background:color-mix(in srgb,var(--s90) 10%,transparent);color:var(--s90)}
+#unseen-stat.done a.fl svg.i{color:var(--s90);stroke-dasharray:24;stroke-dashoffset:24;animation:draw .45s ease-out .1s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+#unseen-stat.done a.fl b{display:none}
+#unseen-stat.done a.fl .lbl{animation:fadeup .35s ease-out}
+@keyframes fadeup{from{opacity:0;transform:translateY(.25em)}to{opacity:1;transform:none}}
+#unseen-stat.bye{max-width:0;opacity:0;margin-right:-.55em;pointer-events:none;overflow:hidden}
+#unseen-stat.bye:not([hidden])+li::before{display:none}
+.filters button.bye{animation:chipout .3s ease-in forwards}
+@keyframes chipout{to{opacity:0;transform:scale(.85)}}
+.list .empty{text-align:center;color:var(--muted);padding:2.6rem 1rem 2.2rem;animation:emptyin .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes emptyin{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.list .empty .ring{width:44px;height:44px;border-radius:50%;margin:0 auto .8rem;display:grid;place-items:center;background:color-mix(in srgb,var(--s90) 12%,transparent);color:var(--s90)}
+.list .empty.neutral .ring{background:var(--chip);color:var(--muted)}
+.list .empty .ring svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s ease-out .2s forwards}
+.list .empty h3{margin:0 0 .25rem;font-size:1rem;font-weight:600;color:var(--fg)}
+.list .empty p{margin:0 0 .9rem;font-size:.85rem}
+.list .empty button{border-radius:999px;padding:.35em .9em;font-size:.82rem}
+@media (prefers-reduced-motion:reduce){#unseen-n.roll,#unseen-stat.done a.fl svg.i,#unseen-stat.done a.fl .lbl,.filters button.bye,.list .empty,.list .empty .ring svg{animation:none;stroke-dashoffset:0;opacity:1}#unseen-stat{transition:none}}
