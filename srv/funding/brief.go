@@ -11,8 +11,10 @@ import (
 	"srv.exe.dev/srv/jobs"
 )
 
-// BriefMinScore: only entries that matter get a fetched brief.
-const BriefMinScore = 35
+// BriefMinScore: every curated entry gets a brief once (the list is
+// hand-selected, so even low-scored rows deserve one page read; briefs are
+// never auto-refreshed, so this is a one-off cost per entry).
+const BriefMinScore = 0
 
 // BriefLabels are the five lines of a funding brief, in order.
 var BriefLabels = []string{"What", "Money", "Eligible", "Timeline", "Next"}
@@ -82,8 +84,23 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) jobs.Run {
 		text, src := jobs.FetchPageText(fctx, e.URL, 6000)
 		cancel()
 		var sb strings.Builder
-		fmt.Fprintf(&sb, "NAME: %s\nPROJECT: %s\nKIND: %s · TRACK: %s\nAMOUNT (record): %s\nDEADLINE (record): %s\nELIGIBILITY (record): %s\nCURATOR NOTE: %s\nHAND SCORE: %d — %s\nURL: %s\nTODAY: %s\n\nPAGE TEXT (%s):\n%s\n",
-			e.Name, strings.ToUpper(e.ProjKey()), e.Kind, e.Track, e.Amount, e.DL(), e.Eligibility, e.Note, e.Score, e.Why, e.URL, time.Now().UTC().Format("2006-01-02"), src, text)
+		dl := e.DL()
+		if e.DeadlineNote != "" {
+			dl += " (" + e.DeadlineNote + ")"
+		}
+		note := e.CleanNote()
+		if v := e.VerifiedDate(); v != "" {
+			note += " [curator verified " + v + "]"
+		}
+		status := e.Status
+		if e.Pinned {
+			status += ", starred by owner"
+		}
+		if e.UserNote != "" {
+			status += "; owner note: " + e.UserNote
+		}
+		fmt.Fprintf(&sb, "NAME: %s\nPROJECT: %s\nKIND: %s · TRACK: %s\nAMOUNT (record): %s\nDEADLINE (record): %s\nELIGIBILITY (record): %s\nCURATOR NOTE: %s\nHAND SCORE: %d — %s\nOWNER STATUS: %s\nURL: %s\nTODAY: %s\n\nPAGE TEXT (%s):\n%s\n",
+			e.Name, strings.ToUpper(e.ProjKey()), e.Kind, e.Track, e.Amount, dl, e.Eligibility, note, e.Score, e.Why, status, e.URL, time.Now().UTC().Format("2006-01-02"), src, text)
 		out, in, nOut, err := jobs.Chat(ctx, briefPrompt, sb.String(), 1600)
 		c := jobs.CostUSD(in, nOut)
 		run.InTokens += in

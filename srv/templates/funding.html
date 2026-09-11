@@ -55,7 +55,7 @@
 </div>
 {{if .Msg}}<p class="msg">{{.Msg}}</p>{{end}}
 {{if .Owner}}<div class="bar" id="bar">
-<form method="post" action="/admin/funding/brief"><button title="Read each official page and write a 5-line brief for entries without one (score ≥ 35, open). Uses the shared LLM budget."><svg class="i"><use href="#i-brain"/></svg>brief{{if .Unbriefed}} <span class="n">{{.Unbriefed}}</span>{{end}}</button></form>
+<form method="post" action="/admin/funding/brief"><button title="Read each official page and write a 5-line brief for entries without one. Uses the shared LLM budget."><svg class="i"><use href="#i-brain"/></svg>brief{{if .Unbriefed}} <span class="n">{{.Unbriefed}}</span>{{end}}</button></form>
 <form method="post" action="/admin/funding/brief" onsubmit="return confirm('Regenerate ALL briefs? Costs a few cents of LLM budget.')"><input type="hidden" name="all" value="1"><button class="ghost" title="Drop and regenerate every brief"><svg class="i"><use href="#i-refresh"/></svg>re-brief all</button></form>
 <form method="post" action="/admin/funding/reseed"><button class="ghost" title="Refreshes curated fields from seed.go; keeps your status, notes and briefs"><svg class="i"><use href="#i-undo"/></svg>reseed</button></form>
 </div>

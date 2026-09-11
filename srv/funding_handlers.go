@@ -27,7 +27,7 @@ type fundingPage struct {
 	Activity   jobs.ActivityState
 	ShowHidden bool   // ?hidden=1 lists skipped/rejected entries too
 	Briefed    int    // entries with an LLM brief
-	Unbriefed  int    // entries still waiting for one (score ≥ BriefMinScore, open)
+	Unbriefed  int    // entries still waiting for one (open, not yet briefed)
 	BriefDate  string // newest brief date
 	MonthUSD   string
 	Budget     string
@@ -97,7 +97,7 @@ func (s *Server) HandleAdminFundingBrief(w http.ResponseWriter, r *http.Request)
 				return "clear briefs: " + err.Error()
 			}
 		}
-		run := funding.BriefPending(ctx, s.DB, 80)
+		run := funding.BriefPending(ctx, s.DB, 200)
 		return fmt.Sprintf("briefed %d funding entries, cost %s", run.Ranked, jobs.USD(run.CostUSD))
 	})
 }
