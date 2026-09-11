@@ -21,6 +21,7 @@ type Entry struct {
 	URL          string
 	Kind         string
 	Track        string
+	Proj         string // "palantir" | "ngi" | "both" – which venture this serves (see ProjLabel)
 	Amount       string
 	Deadline     string
 	DeadlineNote string
@@ -65,14 +66,14 @@ func (e Entry) DL() string {
 	return "—"
 }
 
-const cols = `id, key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason, pinned, brief, briefed_at`
+const cols = `id, key, name, url, kind, track, proj, amount, deadline, deadline_note, eligibility, note, score, why, status, user_note, vote, trash_reason, pinned, brief, briefed_at`
 
 func scan(rows *sql.Rows) ([]Entry, error) {
 	var out []Entry
 	for rows.Next() {
 		var e Entry
 		var pinned int64
-		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason, &pinned, &e.Brief, &e.BriefedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.Key, &e.Name, &e.URL, &e.Kind, &e.Track, &e.Proj, &e.Amount, &e.Deadline, &e.DeadlineNote, &e.Eligibility, &e.Note, &e.Score, &e.Why, &e.Status, &e.UserNote, &e.Vote, &e.TrashReason, &pinned, &e.Brief, &e.BriefedAt); err != nil {
 			return nil, err
 		}
 		e.Pinned = pinned == 1
@@ -111,12 +112,15 @@ func Seed(ctx context.Context, db *sql.DB) (int, error) {
 	n := 0
 	for _, e := range Seeds {
 		e = applyVerified(e)
-		res, err := db.ExecContext(ctx, `INSERT INTO funding (key, name, url, kind, track, amount, deadline, deadline_note, eligibility, note, score, why)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-			ON CONFLICT(key) DO UPDATE SET name=excluded.name, url=excluded.url, kind=excluded.kind, track=excluded.track,
+		if e.Proj == "" {
+			e.Proj = ProjPalantir
+		}
+		res, err := db.ExecContext(ctx, `INSERT INTO funding (key, name, url, kind, track, proj, amount, deadline, deadline_note, eligibility, note, score, why)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+			ON CONFLICT(key) DO UPDATE SET name=excluded.name, url=excluded.url, kind=excluded.kind, track=excluded.track, proj=excluded.proj,
 			amount=excluded.amount, deadline=excluded.deadline, deadline_note=excluded.deadline_note, eligibility=excluded.eligibility,
 			note=excluded.note, score=excluded.score, why=excluded.why, updated_at=datetime('now')`,
-			e.Key, e.Name, e.URL, e.Kind, e.Track, e.Amount, e.Deadline, e.DeadlineNote, e.Eligibility, e.Note, e.Score, e.Why)
+			e.Key, e.Name, e.URL, e.Kind, e.Track, e.Proj, e.Amount, e.Deadline, e.DeadlineNote, e.Eligibility, e.Note, e.Score, e.Why)
 		if err != nil {
 			return n, fmt.Errorf("seed %s: %w", e.Key, err)
 		}
@@ -233,4 +237,38 @@ func (e Entry) ShortDL() string {
 		n = n[:57] + "…"
 	}
 	return n
+}
+
+// Project tags. Every entry serves at least one of the two ventures.
+const (
+	ProjPalantir = "palantir" // Veridical Earth – "Palantir for land use" (YC application), Vienna-based founder
+	ProjNGI      = "ngi"      // Landscape Governance Initiative – Central African Republic pilot, company-like vehicle
+	ProjBoth     = "both"
+)
+
+// ProjLabel is the short badge text shown on cards.
+func ProjLabel(p string) string {
+	switch p {
+	case ProjNGI:
+		return "NGI"
+	case ProjBoth:
+		return "Palantir + NGI"
+	default:
+		return "Palantir"
+	}
+}
+
+// ForNGI / ForPalantir report whether the entry serves that venture.
+func (e Entry) ForNGI() bool { return e.Proj == ProjNGI || e.Proj == ProjBoth }
+func (e Entry) ForPalantir() bool {
+	return e.Proj == "" || e.Proj == ProjPalantir || e.Proj == ProjBoth
+}
+func (e Entry) ProjLabel() string { return ProjLabel(e.Proj) }
+
+// ProjKey normalises the tag ("" → palantir) for data attributes and prompts.
+func (e Entry) ProjKey() string {
+	if e.Proj == "" {
+		return ProjPalantir
+	}
+	return e.Proj
 }

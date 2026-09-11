@@ -30,6 +30,30 @@
       default:return d.track===f||d.kind===f||d.region===f;
     }
   }
+  // venture segment (funding radar): orthogonal to the chips; sticky in URL (?p=) and localStorage
+  var seg=document.getElementById('proj'),ps=seg?[].slice.call(seg.querySelectorAll('button')):[],proj='';
+  function projOk(el){if(!seg||!proj)return true;var v=el.dataset.proj;return v===proj||v==='both';}
+  function setProj(p,quiet){
+    proj=p||'';
+    ps.forEach(function(b){b.setAttribute('aria-selected',b.dataset.p===proj?'true':'false');});
+    try{localStorage.setItem('funding.proj',proj);}catch(e){}
+    var ups=[].slice.call(document.querySelectorAll('.upc')),nd=0;
+    ups.forEach(function(u){var m=projOk(u);u.classList.toggle('off',!m);if(m)nd++;});
+    var dh=document.getElementById('due-h');if(dh)dh.classList.toggle('off',!nd);
+    ['n-due','n-due2'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=nd;});
+    var ne=document.getElementById('n-entries'),na=document.getElementById('n-all');
+    var vis=cards.filter(function(c){return projOk(c)&&(showHidden||c.dataset.hidden!=='1');}).length;
+    if(ne)ne.textContent=vis;if(na)na.textContent=vis;
+    var un=document.getElementById('unseen-n'),us=document.getElementById('unseen-stat');
+    if(un&&us&&!us.classList.contains('done')){var nu=cards.filter(function(c){return projOk(c)&&c.dataset.hidden!=='1'&&c.dataset.seen!=='1'&&c.dataset.seenNow!=='1';}).length;un.textContent=nu;us.hidden=!nu;}
+    if(!quiet)document.documentElement.classList.toggle('proj-on',!!proj);
+  }
+  if(seg){
+    ps.forEach(function(b){var n=cards.filter(function(c){var v=c.dataset.proj;return (!b.dataset.p||v===b.dataset.p||v==='both')&&c.dataset.hidden!=='1';}).length;var el=b.querySelector('.n');if(el)el.textContent=n;});
+    ps.forEach(function(b){b.addEventListener('click',function(){if(b.dataset.p===proj)return;sweep();setProj(b.dataset.p);apply(cur());});});
+    seg.addEventListener('keydown',function(e){var i=ps.indexOf(document.activeElement);if(i<0)return;var j=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:-1;if(j<0||j>=ps.length)return;e.preventDefault();ps[j].focus();ps[j].click();});
+  }
+  function cur(){var b=bar.querySelector('button[aria-pressed=true]');return b?b.dataset.f:'';}
   var showHidden=/[?&]hidden=1/.test(location.search);
   var list=document.querySelector('.list'),emptyEl;
   function empty(f,n){
@@ -46,13 +70,13 @@
     list.appendChild(emptyEl);
   }
   function apply(f){
-    var n=0;cards.forEach(function(c){var m=match(c,f)&&(showHidden||c.dataset.hidden!=='1');c.hidden=!m;if(m)n++;});
+    var n=0;cards.forEach(function(c){var m=projOk(c)&&match(c,f)&&(showHidden||c.dataset.hidden!=='1');c.hidden=!m;if(m)n++;});
     empty(f,n);
     bs.forEach(function(b){var on=b.dataset.f===f;b.setAttribute('aria-pressed',on?'true':'false');if(on&&b.scrollIntoView&&bar.scrollWidth>bar.clientWidth)b.scrollIntoView({block:'nearest',inline:'center'});});
     [].forEach.call(document.querySelectorAll('[data-filter]'),function(a){a.classList.toggle('on',a.dataset.filter===f);});
     var us=document.getElementById('unseen-stat');if(us&&us.classList.contains('done')&&f!=='unseen'&&!us.classList.contains('bye')){us.classList.add('bye');setTimeout(function(){us.hidden=true;},520);var ub=bar.querySelector('button[data-f=unseen]');if(ub)ub.hidden=true;}
-    if(count)count.textContent=n+'/'+cards.filter(function(c){return showHidden||c.dataset.hidden!=='1';}).length;
-    try{var hq=showHidden?'hidden=1':'';history.replaceState(null,'',location.pathname+(f||hq?'?'+[hq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
+    if(count)count.textContent=n+'/'+cards.filter(function(c){return projOk(c)&&(showHidden||c.dataset.hidden!=='1');}).length;
+    try{var hq=showHidden?'hidden=1':'',pq=proj?'p='+proj:'';history.replaceState(null,'',location.pathname+(f||hq||pq?'?'+[hq,pq,f?'f='+f:''].filter(Boolean).join('&'):'')+location.hash);}catch(e){}
   }
   function sweep(){cards.forEach(function(c){delete c.dataset.seenNow;});}
   bs.forEach(function(b){b.addEventListener('click',function(){sweep();apply(b.dataset.f);});});
@@ -62,9 +86,10 @@
     apply(cur&&cur.dataset.f===f?'':f);
     var h2=bar.previousElementSibling;(h2||bar).scrollIntoView({behavior:'smooth',block:'start'});
   });});
-  var q=new URLSearchParams(location.search).get('f');
+  var sp=new URLSearchParams(location.search),q=sp.get('f');
+  if(seg){var p0=sp.has('p')?sp.get('p'):(function(){try{return localStorage.getItem('funding.proj')||'';}catch(e){return '';}})();setProj(ps.some(function(b){return b.dataset.p===p0;})?p0:'');}
   apply(q&&bs.some(function(b){return b.dataset.f===q;})?q:'');
-  window.radarRefilter=function(){var b=bar.querySelector('button[aria-pressed=true]');apply(b?b.dataset.f:'');};
+  window.radarRefilter=function(){if(seg)setProj(proj,true);apply(cur());};
 })();
 
 // seen tracking (Feedly/Slack-style): a card counts as seen once ≥50% of it has

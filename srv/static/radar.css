@@ -120,6 +120,20 @@ button.ghost:hover{color:var(--fg);background:var(--chip)}
 
 /* filter chips */
 .filters{display:flex;gap:.35rem;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:var(--bg);padding:.5rem 0;margin:0 0 .3rem;border-bottom:1px solid var(--line)}
+/* venture switcher: segmented control, sticky together with the chips */
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:var(--chip);gap:2px;margin:.8rem 0 .2rem;max-width:100%}
+.off{display:none!important}
+.seg button{border:0;background:transparent;border-radius:999px;padding:.35em .95em;min-height:34px;font-size:.85rem;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:.45em;white-space:nowrap;transition:background .18s,color .18s,box-shadow .18s}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-selected=true]{background:var(--bg);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 1px var(--line)}
+.seg button .n{font-weight:500;font-size:.75rem;color:var(--faint);font-variant-numeric:tabular-nums;padding:0 .45em;border-radius:999px;background:var(--bg);min-width:1.6em;text-align:center;line-height:1.5}
+.seg button[aria-selected=true] .n{background:var(--chip);color:var(--muted)}
+.seg button[data-p=ngi][aria-selected=true]{color:#1e6b3a}.seg button[data-p=palantir][aria-selected=true]{color:#2a4a8a}
+@media (prefers-color-scheme:dark){.seg button[data-p=ngi][aria-selected=true]{color:#8fd3a5}.seg button[data-p=palantir][aria-selected=true]{color:#9db8ee}.seg button[aria-selected=true]{box-shadow:0 0 0 1px var(--line)}}
+@media (max-width:640px){.seg{display:flex}.seg button{flex:1;justify-content:center;padding:.35em .5em}}
+/* while one venture is selected the badge is redundant on single-venture cards – keep it for "both" */
+.proj-on .card .tag.proj.palantir,.proj-on .card .tag.proj.ngi{display:none}
+.tag.proj.palantir{background:#e8eefb;color:#2a4a8a}@media (prefers-color-scheme:dark){.tag.proj.palantir{background:#1a2a4a;color:#9db8ee}}
 @media (max-width:640px){.filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-inline:-12px;padding-inline:12px;mask-image:linear-gradient(90deg,#000 92%,transparent)}.filters::-webkit-scrollbar{display:none}.filters .chip{border-radius:999px;padding:.3em .85em;min-height:32px;font-size:.82rem;white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:.35em;color:var(--muted);border:1px dashed var(--line);margin-left:auto}
 .filters .chip:hover{text-decoration:none;color:var(--fg);background:var(--chip)}
 .filters .chip.on{border-style:solid;color:var(--fg);background:var(--chip)}
@@ -148,6 +162,8 @@ button.ghost:hover{color:var(--fg);background:var(--chip)}
 .title svg.i{opacity:.45;margin-left:.2em;width:.8em;height:.8em}
 .tags{margin:.3rem 0 .15rem;display:flex;flex-wrap:wrap;gap:.3rem .35rem;align-items:center}
 .tag{background:var(--chip);color:var(--chip-fg);padding:.05em .5em;border-radius:999px;font-size:.75rem;white-space:nowrap}
+.tag.proj{font-weight:600;letter-spacing:.01em;border:1px solid transparent}.tag.proj.ngi{background:#e6f4ea;color:#1e6b3a}.tag.proj.both{background:linear-gradient(90deg,var(--chip) 50%,#e6f4ea 50%);color:var(--fg)}
+@media (prefers-color-scheme:dark){.tag.proj.ngi{background:#153d25;color:#8fd3a5}.tag.proj.both{background:linear-gradient(90deg,var(--chip) 50%,#153d25 50%)}}
 .tag.soon{background:var(--soon);color:var(--soon-fg);font-weight:600}
 .tag.past{text-decoration:line-through;color:var(--faint)}
 .tag.status{border:1px solid var(--line);background:transparent}

@@ -17,12 +17,16 @@ const BriefMinScore = 35
 // BriefLabels are the five lines of a funding brief, in order.
 var BriefLabels = []string{"What", "Money", "Eligible", "Timeline", "Next"}
 
-const briefPrompt = `You brief ONE person on ONE funding opportunity (grant, prize, accelerator, incubator, investor or credits programme). He is a solo founder in Vienna, Austria, a former national park director with an Oxford postgraduate diploma; no company yet (natural person; would incorporate when a programme requires it – Austria by default, but a UK, Swedish or Central African Republic entity is possible if the opportunity needs it), no revenue, no co-founder yet; works between Vienna and the Central African Republic (Chinko). Project: "Veridical Earth" – a land-use governance / earth-observation data platform (LIDAR, Copernicus, VIIRS fusion, flood/fire/drought, protected areas), plus free open-source apps on kohlschwarz.at, plus a free protected-area management app for African parks.
+const briefPrompt = `You brief ONE person on ONE funding opportunity (grant, prize, accelerator, incubator, investor or credits programme). He is a solo founder, a former national park director (Chinko, CAR co-founder; 12 years in African protected areas) with an Oxford postgraduate diploma; no company yet (natural person; would incorporate when a programme requires it – Austria by default, but a UK, Swedish or Central African Republic company OR a registered NGO/association is possible if the opportunity needs it), no revenue, no co-founder yet; works between Vienna and the Central African Republic.
+He runs TWO ventures; the record tells you which one (PROJECT line):
+- PALANTIR = "Veridical Earth" ("Palantir for land use", YC application): land-use governance / earth-observation data platform (LIDAR, Copernicus, VIIRS fusion, flood/fire/drought, protected areas), plus free open-source apps on kohlschwarz.at and a free protected-area management app for African parks. Vienna-based; Austrian/EU/UK programmes matter.
+- NGI = "Landscape Governance Initiative": Central-African, company-like vehicle (not a conventional NGO, but will register one if needed) that trains and equips a two-person Landscape Oversight Unit inside the CAR Ministry of Environment (remote sensing, control room, oversight of NGO-managed parks) and drafts a National Landscape Plan; budget ~USD 585k year 1, ~650k year 2; later all Africa Keystone Partnership countries. Vienna is irrelevant for NGI; what matters is CAR eligibility, government-capacity/PA-governance themes and whether a company or a new NGO can receive the money.
+- BOTH = judge for whichever venture fits the opportunity better and say which.
 
 You get the curated record (name, amount, deadline, eligibility notes, scored 0-100 by hand) and the fetched official page text (may contain navigation noise; ignore it). Answer in English with EXACTLY these five lines, each "Label: text", telegraphic style (drop articles and filler), no markdown, no preamble, do not repeat the name, only what the page or record supports. Prefer the PAGE for facts and say so when it contradicts the record (e.g. "page says …"):
 What: funder and instrument; what is funded (activities, costs); form (grant / equity / voucher / prize / programme)
 Money: amount or range, funding rate, own-contribution, in-kind extras (coaching, office, credits)
-Eligible: who may apply – natural persons? company age limit? location/seat requirement (and whether an AT, UK, SE or CAR entity would satisfy it)? team size? sector; the ONE blocker for him if any
+Eligible: who may apply – natural persons? company age limit? location/seat requirement (and whether an AT, UK, SE or CAR entity – company or NGO – would satisfy it)? team size? sector; the ONE blocker for him if any
 Timeline: call status per page (open / closed / rolling / next round), concrete dates, decision time, steps (registration, pitch, interview)
 Next: the single most useful concrete action for him this month, <=20 words
 If the page text is missing or unreadable, set What to 'Page not readable; from record:' and keep other lines short.`
@@ -78,8 +82,8 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) jobs.Run {
 		text, src := jobs.FetchPageText(fctx, e.URL, 6000)
 		cancel()
 		var sb strings.Builder
-		fmt.Fprintf(&sb, "NAME: %s\nKIND: %s · TRACK: %s\nAMOUNT (record): %s\nDEADLINE (record): %s\nELIGIBILITY (record): %s\nCURATOR NOTE: %s\nHAND SCORE: %d — %s\nURL: %s\nTODAY: %s\n\nPAGE TEXT (%s):\n%s\n",
-			e.Name, e.Kind, e.Track, e.Amount, e.DL(), e.Eligibility, e.Note, e.Score, e.Why, e.URL, time.Now().UTC().Format("2006-01-02"), src, text)
+		fmt.Fprintf(&sb, "NAME: %s\nPROJECT: %s\nKIND: %s · TRACK: %s\nAMOUNT (record): %s\nDEADLINE (record): %s\nELIGIBILITY (record): %s\nCURATOR NOTE: %s\nHAND SCORE: %d — %s\nURL: %s\nTODAY: %s\n\nPAGE TEXT (%s):\n%s\n",
+			e.Name, strings.ToUpper(e.ProjKey()), e.Kind, e.Track, e.Amount, e.DL(), e.Eligibility, e.Note, e.Score, e.Why, e.URL, time.Now().UTC().Format("2006-01-02"), src, text)
 		out, in, nOut, err := jobs.Chat(ctx, briefPrompt, sb.String(), 1600)
 		c := jobs.CostUSD(in, nOut)
 		run.InTokens += in
