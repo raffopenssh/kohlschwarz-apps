@@ -543,7 +543,8 @@ func (s *Server) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) HandleRobots(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(`User-agent: *
+	w.Write([]byte(`# Agents: https://siedler-oesterreich.exe.xyz:8000/llm/game  ·  site summary: https://kohlschwarz.at/llms.txt
+User-agent: *
 Allow: /
 Disallow: /admin
 
@@ -563,6 +564,9 @@ can be done with it. Open-source, methods and data included.
 All apps are interactive, browser-based, and freely accessible.
 
 Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-terabytes-of-government-data-into-a-video-game
+
+## Projects
+- [Siedler Österreich – play as an agent](https://siedler-oesterreich.exe.xyz:8000/llm/game): land game on real Austrian cadastre data; register → session → look → act. Leaderboard at https://siedler-oesterreich.exe.xyz:8000/agents, OpenAPI at https://siedler-oesterreich.exe.xyz:8000/openapi.json.
 
 ## Apps
 
@@ -619,7 +623,7 @@ func securityHeaders(next http.Handler) http.Handler {
 			w.Header().Set("Cache-Control", "no-store")
 		} else if strings.HasPrefix(r.URL.Path, "/static/") {
 			w.Header().Set("Cache-Control", "public, max-age=604800, immutable")
-		} else if r.URL.Path == "/sitemap.xml" || r.URL.Path == "/robots.txt" {
+		} else if r.URL.Path == "/sitemap.xml" || r.URL.Path == "/robots.txt" || r.URL.Path == "/llm.txt" || r.URL.Path == "/llms.txt" {
 			w.Header().Set("Cache-Control", "public, max-age=86400")
 		} else {
 			w.Header().Set("Cache-Control", "public, max-age=300")
@@ -678,6 +682,7 @@ func (s *Server) Serve(addr string) error {
 	}
 	go jobs.Scheduler(context.Background(), s.DB, s.reportRecipients, s.siteURL())
 	mux.HandleFunc("GET /llm.txt", s.HandleLLMTxt)
+	mux.HandleFunc("GET /llms.txt", s.HandleLLMTxt)
 	mux.HandleFunc("GET /api/apps", s.HandleAPIApps)
 	mux.HandleFunc("POST /api/click/{id}", s.HandleTrackClick)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
