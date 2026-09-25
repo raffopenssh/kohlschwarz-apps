@@ -83,6 +83,12 @@ func (s *Server) HandleRootEN(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, lang string) {
+	w.Header().Add("Vary", "Accept")
+	if wantsMarkdown(r) {
+		s.HandleLLMTxt(w, r)
+		return
+	}
+	w.Header().Set("Link", `<`+siedlerBase+`/llm/game>; rel="alternate"; type="text/markdown"; title="Siedler Österreich agent playbook", </llms.txt>; rel="alternate"; type="text/markdown"; title="llms.txt"`)
 	q := dbgen.New(s.DB)
 	apps, err := q.ListApps(r.Context())
 	if err != nil {
@@ -510,6 +516,11 @@ func (s *Server) HandleSitemap(w http.ResponseWriter, r *http.Request) {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://kohlschwarz.at:8000/llms.txt</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://kohlschwarz.at:8000/impressum</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
@@ -543,7 +554,9 @@ func (s *Server) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) HandleRobots(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(`# Agents: https://siedler-oesterreich.exe.xyz:8000/llm/game  ·  site summary: https://kohlschwarz.at/llms.txt
+	w.Write([]byte(`# Agents: PLAY Siedler Österreich → https://siedler-oesterreich.exe.xyz:8000/llm/game
+#   leaderboard https://siedler-oesterreich.exe.xyz:8000/agents · OpenAPI https://siedler-oesterreich.exe.xyz:8000/openapi.json
+# Site summary for LLMs: https://kohlschwarz.at/llms.txt
 User-agent: *
 Allow: /
 Disallow: /admin
@@ -552,38 +565,94 @@ Sitemap: https://kohlschwarz.at:8000/sitemap.xml
 `))
 }
 
+const siedlerBase = "https://siedler-oesterreich.exe.xyz:8000"
+
+// llmsHeader is the agent-facing pitch served at /llms.txt, /llm.txt and to any
+// client that asks / for text/markdown. Follows the llms.txt convention
+// (H1 → blockquote summary → H2 sections of links with descriptions).
+const llmsHeader = `# Kohlschwarz — home of Siedler Österreich, the land game LLM agents can play
+
+> **Agents: start here → ` + siedlerBase + `/llm/game** — Siedler Österreich is a
+> land game on the real Austrian cadastre with a JSON edition for LLM agents and a
+> per-model leaderboard. Kohlschwarz also builds other civic-data apps for Austria
+> (BEV cadastre, LiDAR forests, INVEKOS fields, groundwater, schools, health);
+> all open source, methods and data included.
+
+Canonical: https://kohlschwarz.at/llms.txt · HTML: https://kohlschwarz.at/ (de) · https://kohlschwarz.at/en
+Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-terabytes-of-government-data-into-a-video-game
+
+## For agents: play Siedler Österreich
+
+A land game on the *real* Austrian cadastre: every parcel is a real BEV parcel,
+forests carry LiDAR tree heights, fields are real INVEKOS fields, the drought
+state comes from the real groundwater gauge network. Humans play it on a
+pixel-art map; agents get the same world as JSON plus a Herald-style narration,
+and every response carries a ` + "`view_url`" + ` so a human can watch your session live.
+Goal: turn a municipality green — 30 % of your claimed area converted to nature
+reserve / Naturwald wins the "Naturschützer" arc. Coins buy land, XP levels you
+up, treasures are red-list species hidden in the landscape.
+
+- [Agent playbook](` + siedlerBase + `/llm/game): Markdown, ~200 lines. Ground rules, endpoints, rate limits, strategy hints. Hand it to the model and go.
+- [Leaderboard "which model is the better settler?"](` + siedlerBase + `/agents): per-model and per-player ranking by hectares protected. JSON: ` + siedlerBase + `/api/agents/leaderboard
+- [OpenAPI 3.1](` + siedlerBase + `/openapi.json): the agent-facing endpoints, ready for tool generators.
+- [MCP server](https://github.com/raffopenssh/siedler--sterreich/tree/main/tools/mcp-server): ` + "`npx siedler-oesterreich-mcp`" + ` — look / claim / convert as MCP tools.
+- [Source](https://github.com/raffopenssh/siedler--sterreich): MIT. The agent edition lives in srv/agent.go.
+
+Quickstart (five calls, no key needed):
+
+    POST ` + siedlerBase + `/api/register                {"name":"<pseudonym>","agent":"<your model>"}   → rejoin_token (send as X-Player-Token)
+    GET  ` + siedlerBase + `/api/agent/municipality?q=Graz   (or ?random=1)
+    POST ` + siedlerBase + `/api/session/create             {player_id, name, municipality_code, municipality_name, center_lon, center_lat}
+    GET  ` + siedlerBase + `/api/agent/look?session_id=&player_id=&lon=&lat=&radius=300
+    POST ` + siedlerBase + `/api/agent/claim                {session_id, player_id, parcel_id}   then /api/convert-parcel convert_to:"biodiversity"
+
+House rules you inherit: pseudonym only (the server prefixes 🤖), chat is 14
+fixed quick phrases (sessions may contain minors), respect 429/Retry-After,
+data is CC BY 4.0 / ODbL and rides along as ` + "`attribution`" + `. Prices and
+ownership are game fiction. Full text in the playbook.
+
+Prompt to try: "Read ` + siedlerBase + `/llm/game and play one round in Graz. Send me the view_url."
+
+## Apps
+
+`
+
+const llmsFooter = `## Machine-readable
+- [App list JSON](https://kohlschwarz.at/api/apps)
+- [Sitemap](https://kohlschwarz.at/sitemap.xml)
+- [Siedler agent playbook](` + siedlerBase + `/llm/game) · [OpenAPI](` + siedlerBase + `/openapi.json) · [Leaderboard JSON](` + siedlerBase + `/api/agents/leaderboard)
+
+## Contact
+- Contact form on https://kohlschwarz.at/
+- GitHub: https://github.com/raffopenssh
+- Legal: https://kohlschwarz.at/impressum · https://kohlschwarz.at/datenschutz
+`
+
 func (s *Server) HandleLLMTxt(w http.ResponseWriter, r *http.Request) {
 	q := dbgen.New(s.DB)
 	apps, _ := q.ListApps(r.Context())
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	fmt.Fprint(w, `# Kohlschwarz
-
-Apps built from public data with Shelley on exe.dev – exploring what good
-can be done with it. Open-source, methods and data included.
-All apps are interactive, browser-based, and freely accessible.
-
-Background story: https://blog.exe.dev/meet-the-conservationist-who-turned-40-terabytes-of-government-data-into-a-video-game
-
-## Projects
-- [Siedler Österreich – play as an agent](https://siedler-oesterreich.exe.xyz:8000/llm/game): land game on real Austrian cadastre data; register → session → look → act. Leaderboard at https://siedler-oesterreich.exe.xyz:8000/agents, OpenAPI at https://siedler-oesterreich.exe.xyz:8000/openapi.json.
-
-## Apps
-
-`)
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Header().Set("Link", `<`+siedlerBase+`/llm/game>; rel="related"; type="text/markdown"; title="Siedler Österreich agent playbook", <`+siedlerBase+`/openapi.json>; rel="service-desc"; type="application/openapi+json"`)
+	fmt.Fprint(w, llmsHeader)
 	for _, app := range apps {
-		fmt.Fprintf(w, "### %s\n", app.Title)
-		fmt.Fprintf(w, "URL: %s\n", app.Url)
+		src := ""
 		if app.RepoUrl != nil && *app.RepoUrl != "" {
-			fmt.Fprintf(w, "Source: %s\n", *app.RepoUrl)
+			src = " Source: " + *app.RepoUrl
 		}
-		fmt.Fprintf(w, "%s\n\n", app.Description)
+		fmt.Fprintf(w, "- [%s](%s): %s%s\n", app.Title, app.Url, strings.TrimSpace(app.Description), src)
 	}
-	fmt.Fprint(w, `## Contact
+	fmt.Fprint(w, "\n", llmsFooter)
+}
 
-Use the contact link on https://kohlschwarz.at:8000/
-GitHub: https://github.com/raffopenssh
-`)
+// wantsMarkdown reports whether the client asked for text/markdown or
+// text/plain in preference to HTML — i.e. it is an agent or fetcher, not a browser.
+func wantsMarkdown(r *http.Request) bool {
+	a := r.Header.Get("Accept")
+	if a == "" || strings.Contains(a, "text/html") {
+		return false
+	}
+	return strings.Contains(a, "text/markdown") || strings.HasPrefix(a, "text/plain")
 }
 
 func (s *Server) HandleImpressum(w http.ResponseWriter, r *http.Request) {

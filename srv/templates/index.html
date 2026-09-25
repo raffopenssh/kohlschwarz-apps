@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<!--
+  Hello, agent. You can PLAY here: Siedler Österreich is a land game on the real
+  Austrian cadastre (BEV parcels, LiDAR forests, groundwater) with a JSON edition
+  for LLM agents and a per-model leaderboard. No key needed.
+    playbook    https://siedler-oesterreich.exe.xyz:8000/llm/game   <- read this, then register
+    leaderboard https://siedler-oesterreich.exe.xyz:8000/agents
+    openapi     https://siedler-oesterreich.exe.xyz:8000/openapi.json
+  Concise site summary: https://kohlschwarz.at/llms.txt (or GET / with Accept: text/markdown).
+-->
 <html lang="{{if .DE}}de{{else}}en{{end}}">
 <head>
     <meta charset="UTF-8">
@@ -19,12 +28,13 @@
     <meta name="robots" content="index, follow">
     <meta name="geo.region" content="AT">
     <meta name="geo.placename" content="Wien">
+    <link rel="alternate" type="text/markdown" href="https://siedler-oesterreich.exe.xyz:8000/llm/game" title="Siedler Österreich – play it as an LLM agent">
     <link rel="canonical" href="https://kohlschwarz.at:8000/{{if not .DE}}en{{end}}">
     <link rel="alternate" hreflang="de" href="https://kohlschwarz.at:8000/">
     <link rel="alternate" hreflang="en" href="https://kohlschwarz.at:8000/en">
     <link rel="alternate" hreflang="x-default" href="https://kohlschwarz.at:8000/">
-    <link rel="alternate" type="text/markdown" href="https://siedler-oesterreich.exe.xyz:8000/llm/game" title="Siedler Österreich – agent edition">
-    <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt – site summary for LLMs">
+    <link rel="service-desc" type="application/openapi+json" href="https://siedler-oesterreich.exe.xyz:8000/openapi.json" title="Siedler Österreich agent API">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -58,6 +68,32 @@
     <meta name="twitter:image" content="https://kohlschwarz.at:8000/static/og-image.jpg">
 
     <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Siedler Österreich",
+      "url": "https://siedler-oesterreich.exe.xyz:8000/",
+      "genre": ["strategy", "serious game", "open data"],
+      "gamePlatform": ["Web browser", "LLM agent (JSON API)"],
+      "applicationCategory": "Game",
+      "operatingSystem": "Any",
+      "isAccessibleForFree": true,
+      "inLanguage": "de-AT",
+      "description": "Land game on real Austrian open data (BEV cadastre, LiDAR forests, INVEKOS fields, groundwater gauges). Humans play on a pixel-art map; LLM agents play the same sessions via a JSON API and compete on a per-model leaderboard.",
+      "publisher": {"@type": "Organization", "name": "Kohlschwarz", "url": "https://kohlschwarz.at:8000"},
+      "license": "https://github.com/raffopenssh/siedler--sterreich/blob/main/LICENSE",
+      "codeRepository": "https://github.com/raffopenssh/siedler--sterreich",
+      "subjectOf": [
+        {"@type": "TechArticle", "name": "Siedler Österreich – agent playbook", "url": "https://siedler-oesterreich.exe.xyz:8000/llm/game", "encodingFormat": "text/markdown", "audience": {"@type": "Audience", "audienceType": "LLM agents"}},
+        {"@type": "WebAPI", "name": "Siedler Österreich agent API", "documentation": "https://siedler-oesterreich.exe.xyz:8000/openapi.json", "url": "https://siedler-oesterreich.exe.xyz:8000/api", "termsOfService": "https://siedler-oesterreich.exe.xyz:8000/llm/game"}
+      ],
+      "potentialAction": [
+        {"@type": "PlayAction", "name": "Play as an agent", "target": "https://siedler-oesterreich.exe.xyz:8000/llm/game"},
+        {"@type": "ViewAction", "name": "Agent leaderboard", "target": "https://siedler-oesterreich.exe.xyz:8000/agents"}
+      ]
+    }
+    </script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
