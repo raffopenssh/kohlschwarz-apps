@@ -220,18 +220,7 @@ func rankBatch(ctx context.Context, rows []Row, hints string) ([]rankResult, int
 // chat performs one completion against the keyless gateway and returns the
 // reply text plus prompt/completion token counts (for cost accounting).
 func chat(ctx context.Context, system, user string, maxTokens int) (string, int64, int64, error) {
-	body, _ := json.Marshal(map[string]any{
-		"model":       Model,
-		"temperature": 0,
-		"max_tokens":  maxTokens,
-		// Reasoning model: at default effort its thinking alone can exceed
-		// max_tokens and content comes back null.
-		"reasoning_effort": "low",
-		"messages": []map[string]string{
-			{"role": "system", "content": system},
-			{"role": "user", "content": user},
-		},
-	})
+	body, _ := json.Marshal(chatBody(Model, Effort, system, user, maxTokens))
 	req, _ := http.NewRequestWithContext(ctx, "POST", llmURL, bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := (&http.Client{Timeout: 240 * time.Second}).Do(req)
@@ -264,6 +253,55 @@ func chat(ctx context.Context, system, user string, maxTokens int) (string, int6
 		return "", r.Usage.In, r.Usage.Out, fmt.Errorf("reasoning exhausted max_tokens=%d (%d out tokens, no answer)", maxTokens, r.Usage.Out)
 	}
 	return c.Message.Content, r.Usage.In, r.Usage.Out, nil
+}
+
+// Effort is the reasoning effort sent with each request ("" = omit the
+// parameter, "none" = ask the model to skip thinking). Reasoning models at
+// default effort can spend the whole max_tokens budget thinking and return
+// null content, so the ranker runs at "low". A var so the A/B test can sweep it.
+var Effort = "low"
+
+// MaxTokensScale multiplies every max_tokens budget (A/B test knob; 1 = default).
+var MaxTokensScale = 1.0
+
+// chatBody builds the request per provider: OpenAI gpt-5*/o* only accept
+// max_completion_tokens and no temperature; gpt-4.x has no reasoning_effort;
+// Fireworks takes the classic parameters and, for hybrid-thinking models,
+// reasoning_effort "none" or chat_template_kwargs.enable_thinking=false.
+func chatBody(model, effort, system, user string, maxTokens int) map[string]any {
+	maxTokens = int(float64(maxTokens) * MaxTokensScale)
+	m := map[string]any{
+		"model": model,
+		"messages": []map[string]string{
+			{"role": "system", "content": system},
+			{"role": "user", "content": user},
+		},
+	}
+	name := strings.TrimPrefix(model, "openai/")
+	openai := !strings.Contains(model, "/") || strings.HasPrefix(model, "openai/")
+	switch {
+	case openai && (strings.HasPrefix(name, "gpt-5") || strings.HasPrefix(name, "gpt-6") || strings.HasPrefix(name, "o")):
+		m["max_completion_tokens"] = maxTokens // no temperature allowed
+		if effort != "" {
+			if effort == "none" && !strings.HasPrefix(name, "gpt-5.4") && !strings.HasPrefix(name, "gpt-5.5") && !strings.HasPrefix(name, "gpt-5.6") && !strings.HasPrefix(name, "gpt-6") {
+				effort = "minimal" // older gpt-5 family spells "off" as minimal
+			}
+			m["reasoning_effort"] = effort
+		}
+	case openai: // gpt-4.x: no reasoning
+		m["max_tokens"] = maxTokens
+		m["temperature"] = 0
+	default: // fireworks
+		m["max_tokens"] = maxTokens
+		m["temperature"] = 0
+		if effort == "none" {
+			m["reasoning_effort"] = "none"
+			m["chat_template_kwargs"] = map[string]any{"enable_thinking": false}
+		} else if effort != "" {
+			m["reasoning_effort"] = effort
+		}
+	}
+	return m
 }
 
 func costUSD(in, out int64) float64 {
