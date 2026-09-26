@@ -18,14 +18,19 @@ import (
 )
 
 // Model is the cheap ranker used through the exe.dev keyless gateway.
-// (muse-glimmer-30b was undeployed by Fireworks on 2026-09-26 → HTTP 404
-// "Model not found"; gpt-oss-120b is cheaper and returns clean JSON.)
-const Model = "fireworks/gpt-oss-120b"
+// History: muse-glimmer-30b ($0.35/$1.50) lost Fireworks serverless on
+// 2026-09-26 (model page: "Serverless: Not supported"; gateway still lists it
+// but every call → NOT_FOUND). gpt-oss-120b bridged one day; the A/B in
+// modelab_test.go (MODELAB=1) showed glm-5p3-flash gives glimmer-like "why"
+// lines (employer, level, Austrian "unit → park" format) at ~2.5× lower cost,
+// while nemotron-lightning loops in reasoning until max_tokens.
+// It is a var only so the A/B test can swap it.
+var Model = "fireworks/glm-5p3-flash"
 
-// Fireworks list price for gpt-oss-120b (USD per 1M tokens). Reasoning tokens bill as output.
+// Fireworks list price for glm-5p3-flash (USD per 1M tokens). Reasoning tokens bill as output.
 const (
 	priceInPerM  = 0.15
-	priceOutPerM = 0.60
+	priceOutPerM = 0.50
 )
 
 const llmURL = "https://llm.int.exe.xyz/v1/chat/completions"
