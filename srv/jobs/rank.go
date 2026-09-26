@@ -18,12 +18,14 @@ import (
 )
 
 // Model is the cheap ranker used through the exe.dev keyless gateway.
-const Model = "fireworks/muse-glimmer-30b"
+// (muse-glimmer-30b was undeployed by Fireworks on 2026-09-26 → HTTP 404
+// "Model not found"; gpt-oss-120b is cheaper and returns clean JSON.)
+const Model = "fireworks/gpt-oss-120b"
 
-// Fireworks list price for muse-glimmer-30b (USD per 1M tokens). Reasoning tokens bill as output.
+// Fireworks list price for gpt-oss-120b (USD per 1M tokens). Reasoning tokens bill as output.
 const (
-	priceInPerM  = 0.35
-	priceOutPerM = 1.50
+	priceInPerM  = 0.15
+	priceOutPerM = 0.60
 )
 
 const llmURL = "https://llm.int.exe.xyz/v1/chat/completions"
@@ -217,8 +219,8 @@ func chat(ctx context.Context, system, user string, maxTokens int) (string, int6
 		"model":       Model,
 		"temperature": 0,
 		"max_tokens":  maxTokens,
-		// muse-glimmer is a reasoning model: at default effort its thinking
-		// alone regularly exceeds max_tokens and content comes back null.
+		// Reasoning model: at default effort its thinking alone can exceed
+		// max_tokens and content comes back null.
 		"reasoning_effort": "low",
 		"messages": []map[string]string{
 			{"role": "system", "content": system},

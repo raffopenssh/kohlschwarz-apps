@@ -44,7 +44,7 @@
   <li id="upd" title="Scores and deadlines hand-verified against official pages"{{if .Activity.Running}} hidden{{end}}><svg class="i"><use href="#i-check"/></svg>verified <time>2026-09-11</time></li>
   <li><svg class="i"><use href="#i-list"/></svg><b id="n-entries">{{len .Rows}}</b> entries</li>
   <li id="unseen-stat"{{if .Unseen}} class="hi"{{else}} hidden{{end}}><a class="fl" href="/admin/funding?f=unseen" data-filter="unseen" title="Show only entries you haven't looked at yet"><svg class="i"><use href="#i-eye"/></svg><b id="unseen-n">{{.Unseen}}</b> <span class="lbl">unseen</span></a></li>
-  <li title="Page-read LLM briefs (muse-glimmer); shared budget with jobs: {{.MonthUSD}} of {{.Budget}} this month"><svg class="i"><use href="#i-brain"/></svg>{{.Briefed}} briefed{{if .Unbriefed}} · {{.Unbriefed}} pending{{end}}{{if .BriefDate}} <time>{{.BriefDate}}</time>{{end}}</li>
+  <li title="Page-read LLM briefs ({{.Model}}); shared budget with jobs: {{.MonthUSD}} of {{.Budget}} this month"><svg class="i"><use href="#i-brain"/></svg>{{.Briefed}} briefed{{if .Unbriefed}} · {{.Unbriefed}} pending{{end}}{{if .BriefDate}} <time>{{.BriefDate}}</time>{{end}}</li>
   <li{{if .Upcoming}} class="hi"{{end}}><svg class="i"><use href="#i-cal"/></svg><b id="n-due">{{len .Upcoming}}</b> due ≤ 60 d</li>
   <li title="Deadlines ≤ 60 days for score ≥ 40 go into the Monday radar email"><svg class="i"><use href="#i-mail"/></svg>Monday email</li>
 </ul>

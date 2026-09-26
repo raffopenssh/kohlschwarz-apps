@@ -31,6 +31,7 @@ type fundingPage struct {
 	BriefDate  string // newest brief date
 	MonthUSD   string
 	Budget     string
+	Model      string
 	Unseen     int // non-skipped entries the current user has not had on screen yet
 }
 
@@ -66,6 +67,7 @@ func (s *Server) HandleAdminFunding(w http.ResponseWriter, r *http.Request) {
 	}
 	cost := jobs.GetCost(ctx, s.DB)
 	data.MonthUSD, data.Budget = jobs.USD(cost.MonthUSD), jobs.USD(jobs.MaxMonthUSD())
+	data.Model = jobs.Model
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.renderTemplate(w, "funding.html", data); err != nil {
 		slog.Warn("render funding", "error", err)
