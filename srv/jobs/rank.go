@@ -258,8 +258,13 @@ func chat(ctx context.Context, system, user string, maxTokens int) (string, int6
 // Effort is the reasoning effort sent with each request ("" = omit the
 // parameter, "none" = ask the model to skip thinking). Reasoning models at
 // default effort can spend the whole max_tokens budget thinking and return
-// null content, so the ranker runs at "low". A var so the A/B test can sweep it.
-var Effort = "low"
+// null content. The 2026-09-26 sweep (modelab_test.go, none/low/medium with
+// 4x token headroom) showed glm-5p3-flash at "low" inflates borderline rows
+// into the 35-55 band (NÖ Alm/Weide 55, GEF forest MTR 55, blue-carbon 45),
+// while "medium" scores them 40/55/25 like glimmer did, at ~3x the output
+// tokens (~$0.10/month total, still far under the cap). glm-5p3 cannot
+// disable thinking at all. A var so the A/B test can sweep it.
+var Effort = "medium"
 
 // MaxTokensScale multiplies every max_tokens budget (A/B test knob; 1 = default).
 var MaxTokensScale = 1.0
