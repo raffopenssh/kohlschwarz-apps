@@ -13,7 +13,7 @@ journalctl -u srv -n 50 --no-pager
 - Local check: `curl -u admin:$(grep ADMIN_PASSWORD .env|cut -d= -f2) localhost:8000/admin/jobs`. Headless browser can't send basic auth → save HTML to a tmp dir and serve with `busybox httpd` on a free port (8765 is often taken).
 - If restart loops with "address already in use": `sudo ss -ltnp | grep :8000` and kill the orphan `server`.
 - Templates are parsed per request (`renderTemplate`, FuncMap: `runAgo`) → template/CSS/JS edits need no rebuild, Go edits do. Bump `?v=` on `radar.css`/`radar.js` links after changes.
-- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 017 (dedupe_pairs).
+- Migrations: `db/migrations/NNN-name.sql`, applied at startup; end with `INSERT OR IGNORE INTO migrations …`. Latest: 018 (page_text/page_src on job_postings).
 - Commit with `git add <files>` explicitly (blind `git add -A` is blocked).
 
 ## Layout
@@ -25,6 +25,7 @@ srv/funding_handlers.go    /admin/funding*
 srv/jobs/                  sources.go (71 feeds) · fetch.go · match.go (keyword filter) · rank.go (LLM, budget)
                            dedupe.go (union-find: canonical URL + org|title + synonym Jaccard) · report.go (weekly email, Scheduler)
                            signals.go (hiring-difficulty tags, CheckPending page re-check, no LLM) · status.go · store.go (Row, Run, events)
+                           export.go (readPage/FetchPageText: proxy pool → r.jina.ai → raw HTML → Wayback; mainText/focusText trimming)
 srv/feedback/              feedback.go: Reasons (trash-reason chips), Log/Recent/ReasonCounts/Totals, PromptHints (owner verdicts → rank prompt)
 srv/seen/                  seen.go: per-user read state (Mark/Set/User); seen_handlers.go POST /admin/{jobs,funding}/seen {ids:[…]} (viewers allowed)
 srv/feedback_handlers.go   /admin/{jobs,funding}/{vote,note,pin}/{id}, jobs/hide, funding/status — JSON when Accept: application/json, else redirect
@@ -40,6 +41,7 @@ db/                        sqlite open + migrations; dbgen = sqlc output for pub
 - Hiring signals: `Upsert` writes `job_events` (deadline_extended/shortened, reposted, reappeared, reopened); `Row.Signals()` → tags, `Row.Verdict()` → `hard to fill | closed | gone` ribbon + `unfilled`/`live only` chips; email gets "STILL UNFILLED" / "CLOSED THIS WEEK" for rows with an event that week. Signals only for score ≥ 35 and kind ≠ other; LinkedIn datePosted shifts < 14 d are ignored. Add a case to `signals_test.go` when tuning thresholds.
 - Every report/UI cost line must use `Cost.CostLine()`.
 - Owner feedback (both radars): ★ pin (`pinned`; `ORDER BY pinned DESC` first in both `List`s, radar.js moves the card client-side), 👍/👎 (`vote`), inline autosaving note (`user_note`), trash = jobs `hidden` / funding `skip|rejected`. After the first trash of an item the UI asks once for a reason chip (`trash_reason`, `ask_reason` in JSON reply; keys in `feedback.Reasons`). Everything is appended to `feedback_log`; `RankPending` appends `feedback.PromptHints` (last 40 job verdicts) to the system prompt. "What you've taught the radar" panel above the list summarises it.
+- Page text (migration 018): `job_postings.page_text`/`page_src` hold the text the brief was built from. `readPage` (export.go, shared with funding briefs) tries in order: proxy pool (geo-blocked hosts like ktn.gv.at only) → r.jina.ai reader (its "Target URL returned error" stubs are rejected) → raw HTML (`mainText` strips script/style/nav/header/footer, prefers `<main>`/`<article>`; `looksLikeHTML` rejects proxy echo pages; `focusText` cuts chrome ahead of the title) → Wayback `web.archive.org/web/2id_/`. `page_src` values: `captured at fetch` (fetchKTN stores detail pages while a proxy is warm), `fetched via proxy`, `fetched via reader`, `fetched html`, `fetched linkedin` (JSON-LD), `fetched from wayback`, `snippet` (brief built from the feed snippet only; redone once when a later fetch captures the page). Briefs never refetch — re-briefs, the LLM input and `GET /admin/jobs/page/{id}` (viewers allowed; "page text" link on the card) all read the row.
 - Adding a source: append to `Sources` in sources.go; LinkedIn sleeps 6s between requests.
 
 - Seen/unseen (both radars, no LLM): radar.js marks a card seen after ≥50 % visible for 1 s (IntersectionObserver), POSTs ids batched (sendBeacon on pagehide). Per user = `seen.User(X-ExeDev-Email)` (basic auth → `admin`). Cards carry `data-seen`, `.card.unseen::before` hairline fades via `.seen-now`; `unseen` filter chip + tappable “N unseen” header stat (`#unseen-stat`/`#unseen-n`). Cards seen in the current visit stay in the `unseen` view until the filter is re-applied.
