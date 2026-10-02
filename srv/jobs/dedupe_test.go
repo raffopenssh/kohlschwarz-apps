@@ -16,17 +16,28 @@ func TestDedupe(t *testing.T) {
 		{ID: 9, Source: "Noé · nous rejoindre", Title: "Expertise scientifique sur la conservation des espèces", URL: "https://noe.org/c", Score: s(10)},
 		{ID: 10, Source: "TNC", Org: "The Nature Conservancy", Title: "Utah State Director", URL: "https://l/1", Score: s(40)},
 		{ID: 11, Source: "TNC", Org: "The Nature Conservancy", Title: "New Mexico State Director", URL: "https://l/2", Score: s(40)},
+		// same job posted from a sub-brand account: org "WWF Cities" vs "WWF", same location
+		{ID: 12, Source: "LinkedIn · npd", Org: "WWF Cities", Title: "Director WWF-North Africa", Location: "Tunis, Tunis, Tunisia", URL: "https://tn.linkedin.com/jobs/view/director-wwf-north-africa-at-wwf-cities-4473741490", Score: s(45)},
+		{ID: 13, Source: "LinkedIn · npd", Org: "WWF", Title: "Director WWF-North Africa", Location: "Tunis, Tunis, Tunisia", URL: "https://tn.linkedin.com/jobs/view/director-wwf-north-africa-at-wwf-4473730526", Score: s(45)},
+		// related org but different location → stays separate
+		{ID: 14, Source: "LinkedIn · npd", Org: "WWF Germany", Title: "Director WWF-North Africa", Location: "Berlin", URL: "https://de.linkedin.com/jobs/view/z-1", Score: s(45)},
 	}
 	out := Dedupe(rows)
 	ids := map[int64]Row{}
 	for _, r := range out {
 		ids[r.ID] = r
 	}
-	if len(out) != 7 {
+	if len(out) != 9 {
 		for _, r := range out {
 			t.Logf("%d %q dupes=%d", r.ID, r.Title, r.Dupes)
 		}
-		t.Fatalf("want 7 groups, got %d", len(out))
+		t.Fatalf("want 9 groups, got %d", len(out))
+	}
+	if ids[12].Dupes != 1 {
+		t.Errorf("wwf sub-brand merge wrong: %+v", ids[12])
+	}
+	if _, ok := ids[14]; !ok {
+		t.Error("wwf germany wrongly merged")
 	}
 	if r := ids[1]; r.Dupes != 1 || r.FirstSeen != "2026-08-20 00:00:00" || r.Deadline != "2026-10-01" {
 		t.Errorf("noe merge wrong: %+v", r)

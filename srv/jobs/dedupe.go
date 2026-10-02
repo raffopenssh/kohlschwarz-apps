@@ -15,7 +15,10 @@ import (
 //  3. they are in the same org bucket (org, or source when org is blank) and
 //     their synonym-normalised title token sets overlap strongly (Jaccard ≥ 0.6),
 //     e.g. "Directeur.trice du Parc National de Conkouati-Douli (PNCD)" vs
-//     "Conkouati-Douli Park Manager".
+//     "Conkouati-Douli Park Manager", or
+//  4. they share a non-empty location, their titles overlap strongly and their
+//     orgs are related (one is a word-prefix of the other: "WWF" / "WWF Cities"),
+//     e.g. LinkedIn copies posted from a sub-brand account.
 //
 // The input order (best score first, as List orders) decides which row
 // represents the group; the group inherits earliest first_seen, latest
@@ -30,7 +33,9 @@ func Dedupe(rows []Row) []Row {
 	byURL := map[string]int{}
 	byKey := map[string]int{}
 	buckets := map[string][]int{}
+	locs := map[string][]int{}
 	toks := make([]map[string]bool, n)
+	orgs := make([]string, n)
 	for i, r := range rows {
 		if u := CanonicalURL(r.URL); u != "" {
 			if j, ok := byURL[u]; ok {
@@ -48,12 +53,29 @@ func Dedupe(rows []Row) []Row {
 		toks[i] = titleTokens(r.Title)
 		b := orgBucket(r)
 		buckets[b] = append(buckets[b], i)
+		orgs[i] = normOrg(r.Org)
+		if l := normLoc(r.Location); l != "" && orgs[i] != "" {
+			locs[l] = append(locs[l], i)
+		}
 	}
 	for _, idx := range buckets {
 		for a := 0; a < len(idx); a++ {
 			for b := a + 1; b < len(idx); b++ {
 				i, j := idx[a], idx[b]
 				if uf.find(i) == uf.find(j) {
+					continue
+				}
+				if similar(toks[i], toks[j]) {
+					uf.union(i, j)
+				}
+			}
+		}
+	}
+	for _, idx := range locs {
+		for a := 0; a < len(idx); a++ {
+			for b := a + 1; b < len(idx); b++ {
+				i, j := idx[a], idx[b]
+				if uf.find(i) == uf.find(j) || !orgRelated(orgs[i], orgs[j]) {
 					continue
 				}
 				if similar(toks[i], toks[j]) {
@@ -163,8 +185,31 @@ func CanonicalURL(u string) string {
 	return strings.TrimRight(u, "/")
 }
 
+func normOrg(o string) string {
+	return strings.ToLower(strings.Join(strings.Fields(nonAlnum.ReplaceAllString(o, " ")), " "))
+}
+
+func normLoc(l string) string {
+	return strings.ToLower(strings.Join(strings.Fields(nonAlnum.ReplaceAllString(l, " ")), " "))
+}
+
+// orgRelated: equal, or one org is a word-prefix of the other ("wwf" / "wwf cities",
+// "unep" / "unep wcmc"). Both must be non-empty.
+func orgRelated(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	if len(a) > len(b) {
+		a, b = b, a
+	}
+	return strings.HasPrefix(b, a+" ")
+}
+
 func orgBucket(r Row) string {
-	o := strings.ToLower(strings.Join(strings.Fields(nonAlnum.ReplaceAllString(r.Org, " ")), " "))
+	o := normOrg(r.Org)
 	if o != "" {
 		return "o:" + o
 	}
