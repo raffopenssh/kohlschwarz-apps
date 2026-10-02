@@ -114,7 +114,7 @@
     <div class="body">
       {{if $it}}<dl>{{range $it}}<div><dt>{{.Label}}</dt><dd>{{.Text}}</dd></div>{{end}}</dl>{{else if $ctx}}<p>{{$ctx}}</p>{{end}}
       {{if .Events}}<ul class="hist">{{range .Events}}<li>{{.Label}}</li>{{end}}</ul>{{end}}
-      <div class="line meta"><svg class="i"><use href="#i-clock"/></svg><span>since <b>{{.Since}}</b>{{if .Posted}} (posted {{.Posted}}){{end}}{{with .CheckedDate}} · page checked <b>{{.}}</b>{{end}} · last seen <b title="{{.LastSeen}} UTC">{{.SeenAgo}}</b> · via {{.Source}}{{if .Dupes}} · +{{.Dupes}} {{if eq .Dupes 1}}copy{{else}}copies{{end}} merged{{end}}</span>
+      <div class="line meta"><svg class="i"><use href="#i-clock"/></svg><span>since <b>{{.Since}}</b>{{if .Posted}} (posted {{.Posted}}){{end}}{{with .CheckedDate}} · page checked <b>{{.}}</b>{{end}} · last seen <b title="{{.LastSeen}} UTC">{{.SeenAgo}}</b> · via {{.Source}}{{if .Dupes}} · +{{.Dupes}} {{if eq .Dupes 1}}copy{{else}}copies{{end}} merged{{end}}{{if .PageText}} · <a href="/admin/jobs/page/{{.ID}}" title="{{.PageSrc}}">page text</a>{{end}}</span>
       </div>
     </div>
   </details>

@@ -163,6 +163,26 @@ func (s *Server) HandleAdminJobsReport(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(text))
 }
 
+// HandleAdminJobsPage serves the page text captured for a posting (what the
+// brief LLM saw), as plain text.
+func (s *Server) HandleAdminJobsPage(w http.ResponseWriter, r *http.Request) {
+	if ok, _ := s.requireViewer(w, r); !ok {
+		return
+	}
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	row, err := jobs.Get(r.Context(), s.DB, id)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	if row.PageText == "" {
+		fmt.Fprintf(w, "# %s\n%s\n\n(no page text captured yet — it is stored the first time a brief is fetched)\n", row.Title, row.URL)
+		return
+	}
+	fmt.Fprintf(w, "# %s\n%s\nsource: %s\n\n%s\n", row.Title, row.URL, row.PageSrc, row.PageText)
+}
+
 // HandleAdminJobsStatus reports the running background job as JSON (polled by radar.js).
 func (s *Server) HandleAdminJobsStatus(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := s.requireViewer(w, r); !ok {

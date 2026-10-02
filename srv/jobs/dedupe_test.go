@@ -1,6 +1,9 @@
 package jobs
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestDedupe(t *testing.T) {
 	s := func(v int64) *int64 { return &v }
@@ -98,5 +101,21 @@ func TestParseMeta(t *testing.T) {
 	org, loc := parseMeta("Org: UNEP - United Nations Environment Programme\nLocation: unknown\nWhat: x")
 	if org != "UNEP - United Nations Environment Programme" || loc != "" {
 		t.Fatalf("got %q %q", org, loc)
+	}
+}
+
+func TestFocusText(t *testing.T) {
+	nav := strings.Repeat("Home Themen A-Z Arbeitsmarkt ", 10)
+	body := "Die Planstelle des Leiters/der Leiterin der Abteilung 8 – Umwelt. " + strings.Repeat("Aufgaben und Anforderungen. ", 20)
+	got := focusText(nav+body, "Die Planstelle des Leiters/der Leiterin der Abteilung 8 – Umwelt")
+	if got != body {
+		t.Errorf("nav not stripped: %q", got[:60])
+	}
+	if focusText(body, "something else entirely") != body {
+		t.Error("unmatched title must leave text alone")
+	}
+	short := nav + "Die Planstelle des Leiters der Abteilung 8"
+	if focusText(short, "Die Planstelle des Leiters") != short {
+		t.Error("must not cut when the remainder is too short")
 	}
 }

@@ -752,6 +752,7 @@ func (s *Server) handler() *http.ServeMux {
 	mux.HandleFunc("GET /admin/jobs", s.HandleAdminJobs)
 	mux.HandleFunc("GET /admin/jobs/report.txt", s.HandleAdminJobsReport)
 	mux.HandleFunc("GET /admin/jobs/status.json", s.HandleAdminJobsStatus)
+	mux.HandleFunc("GET /admin/jobs/page/{id}", s.HandleAdminJobsPage)
 	mux.HandleFunc("POST /admin/jobs/fetch", s.HandleAdminJobsFetch)
 	mux.HandleFunc("POST /admin/jobs/rank", s.HandleAdminJobsRank)
 	mux.HandleFunc("POST /admin/jobs/voucher", s.HandleAdminJobsVoucher)

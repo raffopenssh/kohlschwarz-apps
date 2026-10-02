@@ -20,6 +20,8 @@ type Row struct {
 	Org             string
 	Location        string
 	Snippet         string
+	PageText        string // readable page text (captured at fetch or brief time)
+	PageSrc         string // how PageText was obtained
 	Lang            string
 	Region          string
 	Kind            string
@@ -120,7 +122,7 @@ func (r Row) IsNew() bool {
 	return err == nil && time.Since(t) < 8*24*time.Hour
 }
 
-const rowCols = `id, url, source, title, org, location, snippet, lang, region, kind, posted, deadline, first_seen, last_seen, score, why, brief, reported_at, hidden, salary, applicants, checked_at, closed_at, reposted, vote, user_note, trash_reason, pinned`
+const rowCols = `id, url, source, title, org, location, snippet, lang, region, kind, posted, deadline, first_seen, last_seen, score, why, brief, reported_at, hidden, salary, applicants, checked_at, closed_at, reposted, vote, user_note, trash_reason, pinned, page_text, page_src`
 
 func scanRows(rows *sql.Rows) ([]Row, error) {
 	defer rows.Close()
@@ -128,7 +130,7 @@ func scanRows(rows *sql.Rows) ([]Row, error) {
 	for rows.Next() {
 		var r Row
 		var hidden, reposted, pinned int64
-		if err := rows.Scan(&r.ID, &r.URL, &r.Source, &r.Title, &r.Org, &r.Location, &r.Snippet, &r.Lang, &r.Region, &r.Kind, &r.Posted, &r.Deadline, &r.FirstSeen, &r.LastSeen, &r.Score, &r.Why, &r.Brief, &r.ReportedAt, &hidden, &r.Salary, &r.Applicants, &r.CheckedAt, &r.ClosedAt, &reposted, &r.Vote, &r.UserNote, &r.TrashReason, &pinned); err != nil {
+		if err := rows.Scan(&r.ID, &r.URL, &r.Source, &r.Title, &r.Org, &r.Location, &r.Snippet, &r.Lang, &r.Region, &r.Kind, &r.Posted, &r.Deadline, &r.FirstSeen, &r.LastSeen, &r.Score, &r.Why, &r.Brief, &r.ReportedAt, &hidden, &r.Salary, &r.Applicants, &r.CheckedAt, &r.ClosedAt, &reposted, &r.Vote, &r.UserNote, &r.TrashReason, &pinned, &r.PageText, &r.PageSrc); err != nil {
 			return nil, err
 		}
 		r.Hidden = hidden == 1
@@ -151,12 +153,23 @@ func Upsert(ctx context.Context, db *sql.DB, p Posting) (bool, error) {
 	var closedAt *string
 	err := db.QueryRowContext(ctx, `SELECT id, deadline, posted, last_seen, closed_at FROM job_postings WHERE url = ?`, p.URL).Scan(&id, &oldDeadline, &oldPosted, &lastSeen, &closedAt)
 	if err == sql.ErrNoRows {
-		_, err = db.ExecContext(ctx, `INSERT INTO job_postings (url, source, title, org, location, snippet, lang, region, posted, deadline)
-			VALUES (?,?,?,?,?,?,?,?,?,?)`, p.URL, p.Source, p.Title, p.Org, p.Location, p.Snippet, p.Lang, p.Region, p.Posted, p.Deadline)
+		src := ""
+		if p.PageText != "" {
+			src = "captured at fetch"
+		}
+		_, err = db.ExecContext(ctx, `INSERT INTO job_postings (url, source, title, org, location, snippet, lang, region, posted, deadline, page_text, page_src)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, p.URL, p.Source, p.Title, p.Org, p.Location, p.Snippet, p.Lang, p.Region, p.Posted, p.Deadline, p.PageText, src)
 		return err == nil, err
 	}
 	if err != nil {
 		return false, err
+	}
+	if p.PageText != "" {
+		// First capture of the page text. A brief written from the snippet
+		// alone (page_src = 'snippet') is redone once with the real text.
+		_, _ = db.ExecContext(ctx, `UPDATE job_postings SET page_text = ?, page_src = 'captured at fetch',
+			briefed_at = CASE WHEN page_src = 'snippet' THEN NULL ELSE briefed_at END
+			WHERE id = ? AND page_text = ''`, p.PageText, id)
 	}
 	// Signals from the listing itself (free, no page fetch).
 	if p.Deadline != "" && oldDeadline != "" && p.Deadline != oldDeadline {
@@ -502,4 +515,10 @@ func FetchAll(ctx context.Context, db *sql.DB) Run {
 		slog.Warn("jobs insert run", "error", err)
 	}
 	return run
+}
+
+// SavePageText stores the readable page text for a posting.
+func SavePageText(ctx context.Context, db *sql.DB, id int64, text, src string) error {
+	_, err := db.ExecContext(ctx, `UPDATE job_postings SET page_text = ?, page_src = ? WHERE id = ?`, text, src, id)
+	return err
 }

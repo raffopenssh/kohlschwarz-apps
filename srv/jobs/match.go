@@ -17,7 +17,8 @@ type Posting struct {
 	Region   string
 	Posted   string
 	Deadline string
-	Tender   bool // procurement notice: topic match alone is enough
+	Tender   bool   // procurement notice: topic match alone is enough
+	PageText string // detail page text captured at fetch time (geo-blocked portals)
 }
 
 // --- Tri-lingual keyword matcher (EN / DE / FR) ---------------------------

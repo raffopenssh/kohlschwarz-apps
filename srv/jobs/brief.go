@@ -62,6 +62,19 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) Run {
 			break
 		}
 		text, src := pageText(ctx, r)
+		if r.PageText == "" {
+			// Persist what the model saw: re-briefs and "page text" links
+			// never refetch, and a snippet-only brief is marked so the row
+			// is briefed once more if the page text turns up later (fetch
+			// capture through the proxy pool).
+			saveText, saveSrc := "", "snippet"
+			if strings.HasPrefix(src, "fetched") {
+				saveText, saveSrc = text, src
+			}
+			if err := SavePageText(ctx, db, r.ID, saveText, saveSrc); err != nil {
+				slog.Warn("jobs save page text", "error", err)
+			}
+		}
 		cands := dupeCandidates(r, listed)
 		var sb strings.Builder
 		fmt.Fprintf(&sb, "TITLE: %s\nORG: %s\nLOCATION: %s\nPOSTED: %s\nDEADLINE: %s\nSOURCE: %s\nURL: %s\nRANKER VERDICT: score %d, %s\n",
@@ -118,12 +131,24 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) Run {
 	return run
 }
 
-// pageText fetches the posting page as readable text: r.jina.ai first (renders
-// JS, strips chrome), raw HTML stripped as fallback, stored snippet last.
+// pageText fetches the posting page as readable text (LinkedIn JSON-LD, then
+// readPage: proxy/reader/html/wayback), stored snippet last.
 func pageText(ctx context.Context, r Row) (text, src string) {
 	const max = 6000
+	if t := strings.TrimSpace(r.PageText); len(t) > 200 {
+		return truncate(t, max), "stored page text (" + r.PageSrc + ")"
+	}
+	defer func() {
+		if strings.HasPrefix(src, "fetched") {
+			text = truncate(focusText(text, r.Title), max)
+		}
+	}()
 	if r.URL != "" {
-		fctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+		timeout := 45 * time.Second
+		if isGeoBlocked(r.URL) {
+			timeout = 120 * time.Second // proxy pool probing is slow
+		}
+		fctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 		if strings.Contains(r.URL, "linkedin.com/jobs/view/") {
 			// Public job pages embed the full description as JSON-LD; the
@@ -140,13 +165,8 @@ func pageText(ctx context.Context, r Row) (text, src string) {
 			}
 			time.Sleep(6 * time.Second)
 		}
-		if b, err := get(fctx, "https://r.jina.ai/"+r.URL); err == nil && len(b) > 200 {
-			return truncate(compactText(string(b)), max), "fetched via reader"
-		}
-		if b, err := get(fctx, r.URL); err == nil {
-			if t := clean(string(b)); len(t) > 200 {
-				return truncate(t, max), "fetched html"
-			}
+		if t, src := readPage(fctx, r.URL, max); t != "" {
+			return t, src
 		}
 	}
 	if s := strings.TrimSpace(r.Snippet); s != "" {

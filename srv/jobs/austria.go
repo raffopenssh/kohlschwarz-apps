@@ -333,10 +333,19 @@ func fetchKTN(ctx context.Context, s Source) ([]Posting, error) {
 			continue
 		}
 		seen[m[2]] = true
-		out = append(out, Posting{
+		p := Posting{
 			URL: "https://www.ktn.gv.at" + html.UnescapeString(m[1]), Title: t,
 			Org: "Amt der Kärntner Landesregierung", Location: "Kärnten", Snippet: "[Land Kärnten] " + t,
-		})
+		}
+		// Capture the detail page now, while a working proxy is warm: the
+		// brief step cannot reach ktn.gv.at directly and the reader proxy
+		// times out on it.
+		if db, err := getViaProxy(ctx, p.URL, func(b []byte) bool {
+			return looksLikeHTML(b) && strings.Contains(string(b), "ktn.gv.at") && len(mainText(string(b))) > 200
+		}); err == nil {
+			p.PageText = truncate(focusText(mainText(string(db)), t), 6000)
+		}
+		out = append(out, p)
 	}
 	return out, nil
 }
