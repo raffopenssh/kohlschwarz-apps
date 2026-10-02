@@ -109,7 +109,7 @@ func (s *Server) HandleAdminJobs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	jobs.AttachEvents(ctx, s.DB, rows)
-	rows = jobs.Dedupe(rows)
+	rows = jobs.DedupeWith(rows, jobs.DuplicatePairs(ctx, s.DB))
 	lf := jobs.LastRun(ctx, s.DB, "fetch")
 	freshSince, newCount := "", 0
 	if lf != nil {

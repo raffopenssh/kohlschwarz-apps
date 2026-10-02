@@ -182,7 +182,7 @@ var Sources = []Source{
 	{Name: "Eurosite vacancies", Kind: "page", Region: "eu", Lang: "en", URL: "https://www.eurosite.org/vacancies/"},
 	{Name: "EuroBrussels · environment", Kind: "page", Region: "eu", Lang: "en", URL: "https://www.eurobrussels.com/job_search/environment"},
 	{Name: "UNjobnet · protected area", Kind: "page", Region: "global", Lang: "en", URL: "https://www.unjobnet.org/jobs?keywords=protected+area"},
-	{Name: "Impactpool · protected area", Kind: "page", Region: "global", Lang: "en", URL: "https://www.impactpool.org/search?q=protected+area"},
+	{Name: "Impactpool · protected area", Kind: "impactpool", Region: "global", Lang: "en", URL: "https://www.impactpool.org/search?q=protected+area"},
 	{Name: "CBD Secretariat jobs", Kind: "page", Region: "global", Lang: "en", URL: "https://www.cbd.int/jobs"},
 	{Name: "GIZ Jobs · Naturschutz", Kind: "page", Region: "global", Lang: "de", URL: "https://jobs.giz.de/index.php?ac=search_result&search_criterion_keyword%5B%5D=naturschutz"},
 	{Name: "Conservation International careers", Kind: "page", Region: "global", Lang: "en", URL: "https://www.conservation.org/careers"},

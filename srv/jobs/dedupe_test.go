@@ -52,3 +52,51 @@ func TestDedupe(t *testing.T) {
 		t.Error("new mexico wrongly merged")
 	}
 }
+
+func TestDedupeWithPairs(t *testing.T) {
+	rows := []Row{
+		{ID: 1, Title: "Marine Protected Area Technical Consultant", Source: "UNjobnet · protected area", URL: "https://www.unjobnet.org/jobs/detail/x-1"},
+		{ID: 2, Title: "Marine Protected Area Technical Consultant", Org: "UNEP - United Nations Environment Programme", Source: "Impactpool · protected area", URL: "https://www.impactpool.org/jobs/1239251"},
+		{ID: 3, Title: "Marine Protected Area Technical Consultant", Org: "WWF", Source: "x", URL: "https://x/3"},
+	}
+	if got := len(Dedupe(rows)); got != 3 {
+		t.Fatalf("deterministic rules should keep 3 (different org buckets), got %d", got)
+	}
+	out := DedupeWith(rows, [][2]int64{{1, 2}})
+	if len(out) != 2 || out[0].ID != 1 || out[0].Dupes != 1 {
+		t.Fatalf("pair should merge 1+2: %+v", out)
+	}
+}
+
+func TestParseDuplicate(t *testing.T) {
+	for in, want := range map[string]int64{
+		"What: x\nDuplicate: 1003": 1003,
+		"Fit: y\nDuplicate: none":  0,
+		"Duplicate: [#42] (same)":  42,
+		"no line":                  0,
+		"- **Duplicate**: 7":       0, // bold label not matched → treated as none (safe)
+	} {
+		if got := parseDuplicate(in); got != want {
+			t.Errorf("%q → %d, want %d", in, got, want)
+		}
+	}
+}
+
+func TestDedupeSameTitleRelatedOrg(t *testing.T) {
+	rows := []Row{
+		{ID: 1, Title: "Marine Protected Area Technical Consultant", Org: "UNEP", Source: "UNjobnet · protected area", URL: "https://www.unjobnet.org/jobs/detail/x-1"},
+		{ID: 2, Title: "Marine Protected Area Technical Consultant", Org: "UNEP - United Nations Environment Programme", Location: "Remote | Bangkok", Source: "Impactpool · protected area", URL: "https://www.impactpool.org/jobs/1239251"},
+		{ID: 3, Title: "Marine Protected Area Technical Consultant", Org: "WWF", Source: "x", URL: "https://x/3"},
+	}
+	out := Dedupe(rows)
+	if len(out) != 2 || out[0].Dupes != 1 || out[0].Location != "Remote | Bangkok" {
+		t.Fatalf("UNEP copies should merge, WWF stay: %+v", out)
+	}
+}
+
+func TestParseMeta(t *testing.T) {
+	org, loc := parseMeta("Org: UNEP - United Nations Environment Programme\nLocation: unknown\nWhat: x")
+	if org != "UNEP - United Nations Environment Programme" || loc != "" {
+		t.Fatalf("got %q %q", org, loc)
+	}
+}

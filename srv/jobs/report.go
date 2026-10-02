@@ -49,7 +49,8 @@ func BuildReport(ctx context.Context, db *sql.DB, siteURL string) (string, []int
 	lastFetch := LastRun(ctx, db, "fetch")
 
 	var fresh, also []Row
-	for _, r := range Dedupe(freshAll) {
+	pairs := DuplicatePairs(ctx, db)
+	for _, r := range DedupeWith(freshAll, pairs) {
 		if r.ScoreVal() >= ReportMinScore && len(fresh) < ReportMax {
 			fresh = append(fresh, r)
 		} else if len(also) < AlsoMax {
@@ -116,7 +117,7 @@ func BuildReport(ctx context.Context, db *sql.DB, siteURL string) (string, []int
 	// that closed since the last report. Only rows with a change this week.
 	today := time.Now().Format("2006-01-02")
 	weekAgo := time.Now().UTC().Add(-7 * 24 * time.Hour).Format("2006-01-02 15:04:05")
-	deduped := Dedupe(all)
+	deduped := DedupeWith(all, pairs)
 	var struggling, closed []Row
 	for _, r := range deduped {
 		if r.ScoreVal() < AlsoMin {

@@ -179,9 +179,11 @@ func Upsert(ctx context.Context, db *sql.DB, p Posting) (bool, error) {
 			deadline = CASE WHEN ? != '' THEN ? ELSE deadline END,
 			posted = CASE WHEN ? > posted THEN ? ELSE posted END,
 			reposted = CASE WHEN ? > posted AND posted != '' THEN 1 ELSE reposted END,
-			snippet = CASE WHEN length(?) > length(snippet) THEN ? ELSE snippet END
+			snippet = CASE WHEN length(?) > length(snippet) THEN ? ELSE snippet END,
+			org = CASE WHEN org = '' THEN ? ELSE org END,
+			location = CASE WHEN location = '' THEN ? ELSE location END
 		WHERE id = ?`,
-		p.Deadline, p.Deadline, p.Posted, p.Posted, p.Posted, p.Snippet, p.Snippet, id)
+		p.Deadline, p.Deadline, p.Posted, p.Posted, p.Posted, p.Snippet, p.Snippet, p.Org, p.Location, id)
 	return false, err
 }
 

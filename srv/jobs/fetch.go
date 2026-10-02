@@ -91,6 +91,8 @@ func Fetch(ctx context.Context, s Source) ([]Posting, error) {
 		ps, err = fetchTalentLink(ctx, s)
 	case "tirol":
 		ps, err = fetchTirol(ctx, s)
+	case "impactpool":
+		ps, err = fetchImpactpool(ctx, s)
 	default:
 		ps, err = fetchPage(ctx, s)
 	}
@@ -468,6 +470,53 @@ func fetchPage(ctx context.Context, s Source) ([]Posting, error) {
 		}
 		seen[abs] = true
 		out = append(out, Posting{URL: abs, Title: text})
+	}
+	return out, nil
+}
+
+// Impactpool search results are cards: <a href="/jobs/ID"><h3>title</h3>
+// <div type=bodyEmphasis>org</div> … <div>location</div> … <div>grade</div>.
+// The generic anchor scraper flattened them into "New job: title org location
+// grade", which hid the org from dedupe and the ranker.
+var (
+	ipCardRe  = regexp.MustCompile(`(?s)<a[^>]*href="(/jobs/\d+)"[^>]*>(.*?)</a>`)
+	ipTitleRe = regexp.MustCompile(`(?s)<h3[^>]*>(.*?)</h3>`)
+	ipBodyRe  = regexp.MustCompile(`(?s)type='bodyEmphasis'[^>]*>(.*?)</div>`)
+)
+
+func fetchImpactpool(ctx context.Context, s Source) ([]Posting, error) {
+	b, err := get(ctx, s.URL)
+	if err != nil {
+		return nil, err
+	}
+	var out []Posting
+	seen := map[string]bool{}
+	for _, m := range ipCardRe.FindAllStringSubmatch(string(b), -1) {
+		t := ipTitleRe.FindStringSubmatch(m[2])
+		if t == nil || seen[m[1]] {
+			continue
+		}
+		seen[m[1]] = true
+		p := Posting{URL: "https://www.impactpool.org" + m[1], Title: clean(t[1])}
+		var fields []string
+		for _, f := range ipBodyRe.FindAllStringSubmatch(m[2], -1) {
+			if v := clean(f[1]); v != "" {
+				fields = append(fields, v)
+			}
+		}
+		if len(fields) > 0 {
+			p.Org = fields[0]
+		}
+		if len(fields) > 1 {
+			p.Location = fields[1]
+		}
+		if len(fields) > 2 {
+			p.Snippet = fields[2]
+		}
+		out = append(out, p)
+	}
+	if len(out) == 0 {
+		return fetchPage(ctx, s)
 	}
 	return out, nil
 }

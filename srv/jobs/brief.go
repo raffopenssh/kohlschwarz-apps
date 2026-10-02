@@ -19,11 +19,14 @@ const BriefMinScore = 35
 
 const briefPrompt = `You brief a former national park director (fluent EN/DE/FR) on ONE job posting or tender. He wants (A) to lead a national park / protected area, (B) senior consultancies on protected-area management, governance, finance or evaluation, or (C) a substantive post inside an Austrian Land/Bund authority that governs a national park, as a step towards directing it.
 
-You get the title, metadata and the fetched page text (may contain navigation noise; ignore it). Answer in English with EXACTLY these four lines, each "Label: text", telegraphic style (drop articles and filler), no markdown, no preamble, do not repeat the title, only what the text supports:
+You get the title, metadata and the fetched page text (may contain navigation noise; ignore it). Answer in English with EXACTLY these lines, each "Label: text", telegraphic style (drop articles and filler), no markdown, no preamble, do not repeat the title, only what the text supports:
+Org: employer exactly as named in the text, acronym first if it has one (e.g. "UNEP - United Nations Environment Programme"); "unknown" if not stated
+Location: duty station(s) / country, or "remote"; "unknown" if not stated
 What: type (permanent post / fixed-term / consultancy ToR / tender lot / news item), employer and unit/department as named in the text
 Terms: grade or salary or contract value, duration, location, deadline if stated
 Duties: core responsibilities, <=18 words
 Fit: one clause on why it does or does not match A, B or C (for C name the park the authority governs, or 'no park link')
+If a CANDIDATES block is present, add a fifth line "Duplicate: <id>" naming the one candidate that is the SAME vacancy (same employer, same role, same contract — just listed on another site or in another language); otherwise "Duplicate: none". Be strict: a similar role at another employer or a different grade/duty station is NOT a duplicate.
 If the page text is missing or a login wall, set What to 'Page not readable; from metadata:' followed by what you can infer, and keep the other lines short.`
 
 // BriefPending fetches the page of each ranked posting (score >= BriefMinScore)
@@ -45,6 +48,10 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) Run {
 		insertRun(ctx, db, run)
 		return run
 	}
+	// Listed rows (score >= BriefMinScore, live, not hidden) are the pool of
+	// possible duplicates; rows already merged by the deterministic rules in
+	// Dedupe are not offered, so the model only sees the near-misses.
+	listed, _ := List(ctx, db, false, 400)
 	spent := 0.0
 	for _, r := range rows {
 		if ctx.Err() != nil {
@@ -55,9 +62,17 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) Run {
 			break
 		}
 		text, src := pageText(ctx, r)
+		cands := dupeCandidates(r, listed)
 		var sb strings.Builder
-		fmt.Fprintf(&sb, "TITLE: %s\nORG: %s\nLOCATION: %s\nPOSTED: %s\nDEADLINE: %s\nSOURCE: %s\nURL: %s\nRANKER VERDICT: score %d, %s\n\nPAGE TEXT (%s):\n%s\n",
-			r.Title, r.Org, r.Location, r.Posted, r.Deadline, r.Source, r.URL, r.ScoreVal(), r.Why, src, text)
+		fmt.Fprintf(&sb, "TITLE: %s\nORG: %s\nLOCATION: %s\nPOSTED: %s\nDEADLINE: %s\nSOURCE: %s\nURL: %s\nRANKER VERDICT: score %d, %s\n",
+			r.Title, r.Org, r.Location, r.Posted, r.Deadline, r.Source, r.URL, r.ScoreVal(), r.Why)
+		if len(cands) > 0 {
+			sb.WriteString("\nCANDIDATES (possibly the same vacancy listed elsewhere):\n")
+			for _, c := range cands {
+				fmt.Fprintf(&sb, "[%d] %s — %s — %s — via %s — first seen %.10s\n", c.ID, c.Title, orDash(c.Org), orDash(c.Location), c.Source, c.FirstSeen)
+			}
+		}
+		fmt.Fprintf(&sb, "\nPAGE TEXT (%s):\n%s\n", src, text)
 		out, in, nOut, err := chat(ctx, briefPrompt, sb.String(), 1400)
 		c := costUSD(in, nOut)
 		run.InTokens += in
@@ -68,6 +83,22 @@ func BriefPending(ctx context.Context, db *sql.DB, maxItems int) Run {
 			slog.Warn("jobs brief", "id", r.ID, "error", err)
 			fmt.Fprintf(&logb, "✗ #%d %.60s: %v\n", r.ID, r.Title, err)
 			continue
+		}
+		if dup := parseDuplicate(out); dup != 0 {
+			for _, c := range cands {
+				if c.ID == dup {
+					if err := MarkDuplicate(ctx, db, r.ID, dup); err == nil {
+						fmt.Fprintf(&logb, "· #%d is a copy of #%d (%s)\n", r.ID, dup, c.Source)
+					}
+				}
+			}
+		}
+		if org, loc := parseMeta(out); org != "" || loc != "" {
+			db.ExecContext(ctx, `UPDATE job_postings SET org = CASE WHEN org = '' THEN ? ELSE org END,
+				location = CASE WHEN location = '' THEN ? ELSE location END WHERE id = ?`, truncate(org, 120), truncate(loc, 120), r.ID)
+			if (r.Org == "" && org != "") || (r.Location == "" && loc != "") {
+				fmt.Fprintf(&logb, "· #%d filled org=%q location=%q\n", r.ID, org, loc)
+			}
 		}
 		brief := normalizeBrief(out)
 		if len(brief) > 900 {
@@ -137,6 +168,112 @@ func compactText(s string) string {
 		out = append(out, ln)
 	}
 	return strings.Join(out, "\n")
+}
+
+var dupLineRe = regexp.MustCompile(`(?im)^\W*duplicate\s*:\s*\[?#?(\d+)`)
+
+// parseDuplicate returns the candidate id named on the "Duplicate:" line, 0 for none.
+func parseDuplicate(out string) int64 {
+	m := dupLineRe.FindStringSubmatch(out)
+	if m == nil {
+		return 0
+	}
+	var id int64
+	fmt.Sscan(m[1], &id)
+	return id
+}
+
+// dupeCandidates picks the listed rows that look like they might be the same
+// vacancy as r but that Dedupe's deterministic rules do not already merge:
+// score >= BriefMinScore, first seen within 60 days, title tokens overlapping
+// weakly (Jaccard >= 0.3 or all tokens of the shorter title contained). Max 6,
+// so the extra prompt cost stays at a few dozen tokens.
+func dupeCandidates(r Row, listed []Row) []Row {
+	rt := titleTokens(r.Title)
+	if len(rt) < 2 {
+		return nil
+	}
+	var pool []Row
+	for _, o := range listed {
+		if o.ID == r.ID || o.ScoreVal() < BriefMinScore || o.Hidden || o.ClosedAt != nil {
+			continue
+		}
+		if r.FirstSeen != "" && o.FirstSeen != "" && daysApart(r.FirstSeen, o.FirstSeen) > 60 {
+			continue
+		}
+		ot := titleTokens(o.Title)
+		if len(ot) < 2 {
+			continue
+		}
+		inter := 0
+		for w := range rt {
+			if ot[w] {
+				inter++
+			}
+		}
+		short := min(len(rt), len(ot))
+		j := float64(inter) / float64(len(rt)+len(ot)-inter)
+		if j >= 0.3 || (inter >= 2 && inter == short) {
+			pool = append(pool, o)
+		}
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	// Drop pairs the deterministic rules already merge: they are hidden as "+N copies" anyway.
+	merged := Dedupe(append([]Row{r}, pool...))
+	keep := map[int64]bool{}
+	for _, m := range merged {
+		keep[m.ID] = true
+	}
+	var out []Row
+	for _, o := range pool {
+		if keep[o.ID] {
+			out = append(out, o)
+		}
+		if len(out) == 6 {
+			break
+		}
+	}
+	return out
+}
+
+func daysApart(a, b string) float64 {
+	ta, ea := time.Parse("2006-01-02 15:04:05", a)
+	tb, eb := time.Parse("2006-01-02 15:04:05", b)
+	if ea != nil || eb != nil {
+		return 0
+	}
+	d := ta.Sub(tb).Hours() / 24
+	if d < 0 {
+		d = -d
+	}
+	return d
+}
+
+// parseMeta reads the Org / Location lines the brief prompt asks for; "unknown"
+// and similar placeholders become "".
+func parseMeta(out string) (org, loc string) {
+	for _, ln := range strings.Split(out, "\n") {
+		ln = strings.TrimSpace(strings.TrimLeft(ln, "-*• "))
+		l := strings.ToLower(ln)
+		switch {
+		case strings.HasPrefix(l, "org:"):
+			org = metaVal(ln[4:])
+		case strings.HasPrefix(l, "location:"):
+			loc = metaVal(ln[9:])
+		}
+	}
+	return
+}
+
+func metaVal(s string) string {
+	s = strings.TrimSpace(strings.Trim(strings.TrimSpace(s), `"'`))
+	switch strings.ToLower(strings.TrimRight(s, ".")) {
+	case "", "unknown", "n/a", "na", "none", "not stated", "unclear", "-", "–":
+		return ""
+	}
+	return s
 }
 
 var briefLabels = []string{"What", "Terms", "Duties", "Fit"}

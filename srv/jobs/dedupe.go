@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"context"
+	"database/sql"
 	"regexp"
 	"sort"
 	"strings"
@@ -18,22 +20,44 @@ import (
 //     "Conkouati-Douli Park Manager", or
 //  4. they share a non-empty location, their titles overlap strongly and their
 //     orgs are related (one is a word-prefix of the other: "WWF" / "WWF Cities"),
-//     e.g. LinkedIn copies posted from a sub-brand account.
+//     e.g. LinkedIn copies posted from a sub-brand account, or
+//  5. their normalised titles are identical, their orgs are related ("UNEP"
+//     on one board, "UNEP - United Nations Environment Programme" on another;
+//     orgs filled in by the brief step make this fire more often) and their
+//     locations do not conflict (equal, or one of them blank).
 //
 // The input order (best score first, as List orders) decides which row
 // represents the group; the group inherits earliest first_seen, latest
 // last_seen, any deadline / org / location / reported_at its copies have, and
 // Dupes = number of collapsed copies.
-func Dedupe(rows []Row) []Row {
+func Dedupe(rows []Row) []Row { return DedupeWith(rows, nil) }
+
+// DedupeWith is Dedupe plus LLM-confirmed pairs (dedupe_pairs, written by
+// BriefPending): the two ids of each pair are merged if both are present.
+func DedupeWith(rows []Row, pairs [][2]int64) []Row {
 	n := len(rows)
 	if n == 0 {
 		return rows
 	}
 	uf := newUF(n)
+	if len(pairs) > 0 {
+		byID := make(map[int64]int, n)
+		for i, r := range rows {
+			byID[r.ID] = i
+		}
+		for _, p := range pairs {
+			if i, ok := byID[p[0]]; ok {
+				if j, ok := byID[p[1]]; ok {
+					uf.union(i, j)
+				}
+			}
+		}
+	}
 	byURL := map[string]int{}
 	byKey := map[string]int{}
 	buckets := map[string][]int{}
 	locs := map[string][]int{}
+	titles := map[string][]int{}
 	toks := make([]map[string]bool, n)
 	orgs := make([]string, n)
 	for i, r := range rows {
@@ -56,6 +80,25 @@ func Dedupe(rows []Row) []Row {
 		orgs[i] = normOrg(r.Org)
 		if l := normLoc(r.Location); l != "" && orgs[i] != "" {
 			locs[l] = append(locs[l], i)
+		}
+		if orgs[i] != "" {
+			if t := k[strings.IndexByte(k, '|')+1:]; len(t) >= 12 {
+				titles[t] = append(titles[t], i)
+			}
+		}
+	}
+	for _, idx := range titles {
+		for a := 0; a < len(idx); a++ {
+			for b := a + 1; b < len(idx); b++ {
+				i, j := idx[a], idx[b]
+				if uf.find(i) == uf.find(j) || !orgRelated(orgs[i], orgs[j]) {
+					continue
+				}
+				li, lj := normLoc(rows[i].Location), normLoc(rows[j].Location)
+				if li == "" || lj == "" || li == lj {
+					uf.union(i, j)
+				}
+			}
 		}
 	}
 	for _, idx := range buckets {
@@ -318,4 +361,33 @@ func sortedTokens(m map[string]bool) []string {
 	}
 	sort.Strings(s)
 	return s
+}
+
+// MarkDuplicate records an LLM verdict that postings a and b are the same vacancy.
+func MarkDuplicate(ctx context.Context, db *sql.DB, a, b int64) error {
+	if a == b {
+		return nil
+	}
+	if a > b {
+		a, b = b, a
+	}
+	_, err := db.ExecContext(ctx, `INSERT OR REPLACE INTO dedupe_pairs (a_id, b_id, same) VALUES (?,?,1)`, a, b)
+	return err
+}
+
+// DuplicatePairs loads the confirmed pairs for DedupeWith.
+func DuplicatePairs(ctx context.Context, db *sql.DB) [][2]int64 {
+	rs, err := db.QueryContext(ctx, `SELECT a_id, b_id FROM dedupe_pairs WHERE same = 1`)
+	if err != nil {
+		return nil
+	}
+	defer rs.Close()
+	var out [][2]int64
+	for rs.Next() {
+		var p [2]int64
+		if rs.Scan(&p[0], &p[1]) == nil {
+			out = append(out, p)
+		}
+	}
+	return out
 }
