@@ -349,6 +349,19 @@ type Run struct {
 }
 
 func insertRun(ctx context.Context, db *sql.DB, r Run) error {
+	// The run row is what the UI's "updated N ago" is based on, so retry
+	// through transient SQLITE_BUSY instead of silently losing the record.
+	var err error
+	for i := 0; i < 5; i++ {
+		if err = insertRunOnce(ctx, db, r); err == nil || !strings.Contains(err.Error(), "locked") {
+			return err
+		}
+		time.Sleep(time.Duration(i+1) * 2 * time.Second)
+	}
+	return err
+}
+
+func insertRunOnce(ctx context.Context, db *sql.DB, r Run) error {
 	_, err := db.ExecContext(ctx, `INSERT INTO job_runs (started, finished, kind, sources_ok, sources_err, found, matched, new_count, ranked, llm_model, llm_in_tokens, llm_out_tokens, llm_cost_usd, log)
 		VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		r.Started, r.Kind, r.SourcesOK, r.SourcesErr, r.Found, r.Matched, r.NewCount, r.Ranked, r.Model, r.InTokens, r.OutTokens, r.CostUSD, r.Log)

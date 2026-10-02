@@ -8,6 +8,7 @@ import (
 	"html"
 	"html/template"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -717,6 +718,20 @@ func securityHeaders(next http.Handler) http.Handler {
 }
 
 func (s *Server) Serve(addr string) error {
+	mux := s.handler()
+	slog.Info("starting server", "addr", addr)
+	return http.ListenAndServe(addr, securityHeaders(mux))
+}
+
+// ServeListener is Serve on an already-bound listener.
+func (s *Server) ServeListener(ln net.Listener) error {
+	mux := s.handler()
+	slog.Info("starting server", "addr", ln.Addr().String())
+	return http.Serve(ln, securityHeaders(mux))
+}
+
+// handler builds the route mux and starts the background scheduler.
+func (s *Server) handler() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.HandleRoot)
 	mux.HandleFunc("GET /en", s.HandleRootEN)
@@ -770,6 +785,5 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /api/apps", s.HandleAPIApps)
 	mux.HandleFunc("POST /api/click/{id}", s.HandleTrackClick)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
-	slog.Info("starting server", "addr", addr)
-	return http.ListenAndServe(addr, securityHeaders(mux))
+	return mux
 }
